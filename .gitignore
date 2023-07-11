@@ -97,3 +97,7 @@ build-aux/compile
 build-aux/depcomp
 build-aux/install-sh
 build-aux/missing
+
+# Flex and bison
+src/parser.c
+src/scanner.c
