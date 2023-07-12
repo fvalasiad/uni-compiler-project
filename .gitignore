@@ -99,5 +99,6 @@ build-aux/install-sh
 build-aux/missing
 
 # Flex and bison
+src/parser.h
 src/parser.c
 src/scanner.c

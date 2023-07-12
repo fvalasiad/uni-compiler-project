@@ -1,13 +1,17 @@
 %{
-#include	<stdio.h>
-
 int yylex();
-void yyerror(const char *);
-
+void yyerror(const char *, ...);
 %}
 
-%token ID NUM VAR INT WHILE IF ELSE PRINT BREAK CONTINUE LEFTPAREN RIGHTPAREN
-%token FOR SEMICOLON LEFTANG RIGHTANG COLON COMMA
+%union {
+    int i;
+    char id[64]; /* A max of 63 characters ought to be enough for a variable name don't ya think? */
+}
+
+%token<i> NUM
+%token<id> ID
+%token VAR INT WHILE IF ELSE PRINT BREAK CONTINUE LEFTPAREN RIGHTPAREN FOR 
+%token SEMICOLON LEFTANG RIGHTANG COLON COMMA
 
 /* Lowest to highest. */
 %right ASSIGN PLUSASSIGN SUBASSIGN MULASSIGN DIVASSIGN MODASSIGN 
@@ -17,16 +21,16 @@ void yyerror(const char *);
 %left LESS LESSEQ BIGGER BIGGEREQ
 %left PLUS SUB
 %left MUL DIV MOD
-%right NOT MINUS
+%right NOT
 %left COMMA LEFTPAREN LEFTANG
 
+/* Dangling else ambiguity */
 %left IF
 %left ELSE
 
 /* Some additional dummy tokens with a set precedence to help yacc do its thing. */
 %left BINOP
 %right UNOP
-
 
 %%
 program : LEFTANG decls stmts RIGHTANG
@@ -101,6 +105,6 @@ binop : OR
       ;
 
 unop : NOT
-     | MINUS
+     | SUB %prec NOT 
      ;
 %%
