@@ -24,7 +24,7 @@ num	-?[1-9]{digit}*
 	yyerror("Consider using variables of length less than %d\n", sizeof(yylval.id));
     }
 
-    memcpy(yylval.id, yytext, yyleng);
+    memcpy(yylval.id, yytext, yyleng + 1); /* Also copy the zero terminating byte. */
     return ID;
 }
 {num}	{
