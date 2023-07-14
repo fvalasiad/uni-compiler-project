@@ -1,4 +1,11 @@
 %{
+#include <string.h>
+#include <stddef.h>
+
+#include "types.h"
+
+context ctx;
+
 int yylex();
 void yyerror(const char *, ...);
 %}
@@ -6,6 +13,8 @@ void yyerror(const char *, ...);
 %union {
     int i;
     char id[64]; /* A max of 63 characters ought to be enough for a variable name don't ya think? */
+    node n;
+    node_type type;
 }
 
 %token<i> NUM
@@ -31,6 +40,9 @@ void yyerror(const char *, ...);
 /* Some additional dummy tokens with a set precedence to help yacc do its thing. */
 %left BINOP
 %right UNOP
+
+%type<n> exp
+%type<type> unop binop asop
 
 %%
 program : LEFTANG decls stmts RIGHTANG
@@ -74,37 +86,65 @@ block : stmt
       | LEFTANG stmts RIGHTANG
       ;
 
-exp : LEFTPAREN exp RIGHTPAREN
-    | NUM
-    | ID
-    | unop exp %prec UNOP
+exp : LEFTPAREN exp RIGHTPAREN { $$ = $2; }
+    | NUM { $$.type = ELITERAL; $$.i = $1; }
+    | ID { $$.type = EID; $$.id = context_find(&ctx, $1 + 1, *$1); }
+    | unop exp %prec UNOP 
+    {
+	$$.type = $1;
+	$$.params = malloc(sizeof(node));
+	*$$.params = $2;
+    }
     | exp binop exp %prec BINOP
+    {
+	$$.type = $2;
+	$$.params = malloc(2 * sizeof(node));
+	$$.params[0] = $1; $$.params[1];
+    }
     ;
 
-asop : ASSIGN
-     | PLUSASSIGN
-     | SUBASSIGN
-     | MULASSIGN
-     | DIVASSIGN
-     | MODASSIGN
+asop : ASSIGN { $$ = EASSIGN; }
+     | PLUSASSIGN { $$ = EPLUSASSIGN; }
+     | SUBASSIGN { $$ = ESUBASSIGN; }
+     | MULASSIGN { $$ = EMULASSIGN; }
+     | DIVASSIGN { $$ = EDIVASSIGN; }
+     | MODASSIGN { $$ = EMODASSIGN; }
      ;
 
-binop : OR
-      | AND
-      | EQ
-      | NOTEQ
-      | LESS
-      | LESSEQ
-      | BIGGER
-      | BIGGEREQ
-      | PLUS
-      | SUB
-      | MUL
-      | DIV
-      | MOD
+binop : OR { $$ = EOR; }
+      | AND { $$ = EAND; }
+      | EQ { $$ = EEQ; }
+      | NOTEQ { $$ = ENOTEQ; }
+      | LESS { $$ = ELESS; }
+      | LESSEQ { $$ = ELESSEQ; }
+      | BIGGER { $$ = EBIGGER; }
+      | BIGGEREQ { $$ = EBIGGEREQ; }
+      | PLUS { $$ = EPLUS; }
+      | SUB { $$ = ESUB; }
+      | MUL { $$ = EMUL; }
+      | DIV { $$ = EDIV; }
+      | MOD { $$ = EMOD; }
       ;
 
-unop : NOT
-     | SUB %prec NOT 
+unop : NOT { $$ = ENOT; }
+     | SUB %prec NOT { $$ = EUMINUS; }
      ;
 %%
+
+char *
+context_find(const context *ctx, const char *id, char id_size)
+{
+    int size = ctx->size;
+    struct id *ids = ctx->ids;
+
+    /* There are size ids registered. */
+    while (size-- && id_size != ids->size && memcmp(id, ids->id, id_size)) {
+	ids += ids->size;
+    }
+
+    if (!size) {
+	return NULL;
+    }
+
+    return ids->id;
+}

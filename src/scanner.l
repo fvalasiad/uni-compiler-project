@@ -1,4 +1,7 @@
 %{
+/* The limitations of POSIX yacc forces us to rely on include order,
+unfortunately. */
+#include "types.h"
 #include "parser.h"
 
 #include <string.h>
@@ -23,8 +26,9 @@ num	-?[1-9]{digit}*
     if (yyleng >= sizeof(yylval.id)) {
 	yyerror("Consider using variables of length less than %d\n", sizeof(yylval.id));
     }
+    yylval.id[0] = yyleng;
 
-    memcpy(yylval.id, yytext, yyleng + 1); /* Also copy the zero terminating byte. */
+    memcpy(yylval.id + 1, yytext, yyleng); /* Also copy the zero terminating byte. */
     return ID;
 }
 {num}	{
