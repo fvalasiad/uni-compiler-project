@@ -3,7 +3,8 @@
 typedef enum node_type {
     ELITERAL, ENOT, EUMINUS, EMOD, EDIV, EMUL, ESUB, EPLUS, EBIGGEREQ, EBIGGER,
     ELESSEQ, ELESS, ENOTEQ, EEQ, EAND, EOR, EMODASSIGN, EDIVASSIGN, EMULASSIGN,
-    ESUBASSIGN, EPLUSASSIGN, EASSIGN, EID
+    ESUBASSIGN, EPLUSASSIGN, EASSIGN, EID, EPRINT, ENOOP, EBREAK, ECONTINUE,
+    ECOMMA, EDECL, EFOR, EWHILE, EIF
 } node_type;
 
 /* That's going to be the \"tree\" representation of the source file.
@@ -30,15 +31,20 @@ typedef struct node {
 
 /* That's our context, the data the parser needs to hold on to while parsing the
  * source file. It's rather small given the simple nature of the language we
- * are creating a compiler for.*/
+ * are creating a compiler for. */
 typedef struct context {
+    /* A set of all the variables, constant after the DECLS point. */
     struct id {
 	char size;
 	char id[];
-    } *ids;			  /* A set of all the variables, constant
-				     after the DECLS point. */
+    } *ids;
 
-    int size;			  /* Gotta know when to stop. */
+    size_t size;		  /* How many (bytes) of them are there? */
+    size_t capacity;
+
+    node tree;
 } context;
 
 char *context_find(const context *, const char *, char);
+
+void context_insert(context *, const char *, char);

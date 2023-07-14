@@ -80,3 +80,9 @@
 -Tuintptr_t
 -Tuseconds_t
 -Tva_list
+
+/* Project specific types */
+-Tcontext
+-Tnode
+-Tnode_type
+-Tid
