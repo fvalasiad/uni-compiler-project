@@ -28,7 +28,7 @@ num	-?[1-9]{digit}*
     }
     yylval.id[0] = yyleng;
 
-    memcpy(yylval.id + 1, yytext, yyleng); /* Also copy the zero terminating byte. */
+    memcpy(yylval.id + 1, yytext, yyleng); /* First byte is size. */
     return ID;
 }
 {num}	{

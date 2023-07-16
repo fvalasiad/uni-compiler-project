@@ -86,3 +86,5 @@
 -Tnode
 -Tnode_type
 -Tid
+-Tstatement
+-Tthree_address_code

@@ -1,10 +1,11 @@
 
+/* ABSTRACT SYNTAX TREE OR STH PARSING-RELATED STUFF */
+
 /* All the defined \"instruction\" or \"expression\" types. */
 typedef enum node_type {
     ELITERAL, ENOT, EUMINUS, EMOD, EDIV, EMUL, ESUB, EPLUS, EBIGGEREQ, EBIGGER,
-    ELESSEQ, ELESS, ENOTEQ, EEQ, EAND, EOR, EMODASSIGN, EDIVASSIGN, EMULASSIGN,
-    ESUBASSIGN, EPLUSASSIGN, EASSIGN, EID, EPRINT, ENOOP, EBREAK, ECONTINUE,
-    ECOMMA, EDECL, EFOR, EWHILE, EIF
+    ELESSEQ, ELESS, ENOTEQ, EEQ, EAND, EOR, EASSIGN, EID, EPRINT, ENOOP, EBREAK,
+    ECONTINUE, ECOMMA, EDECL, EFOR, EWHILE, EIF
 } node_type;
 
 /* That's going to be the \"tree\" representation of the source file.
@@ -18,10 +19,7 @@ typedef struct node {
     node_type type;
 
     /* in case the node represents a constant, or an id for that matter. */
-    union {
-	char *id;
-	int i;
-    };
+    int i;
 
     /* parameters, a dynamic array. */
     struct node *params;
@@ -45,6 +43,45 @@ typedef struct context {
     node tree;
 } context;
 
-char *context_find(const context *, const char *, char);
+int context_find(const context *, const char *, char);
 
 void context_insert(context *, const char *, char);
+
+/* THREE ADDRESS CODE IR OR STH IDK I came up with this on the fly
+ * upon seeing some MIXAL docs. It reminds me of 8086 in some aspects
+ * so I'll probably be biased.
+ *
+ * Gonna call them statements here for a change.
+ *
+ * Some key aspects: SSA! */
+
+/* Once again, we need types, don't we? */
+typedef enum {
+    SMOV
+} statement_type;
+
+typedef struct {
+    /* What instruction is this? */
+    statement_type type;
+
+    /* That's enough, I think */
+    int tx;
+    int ty;
+    int tz;
+} statement;
+
+typedef struct {
+    /* A program is, if we think about it, just an array of those. */
+    statement *statements;
+    size_t size;
+    size_t capacity;
+
+    /* Let's carry some context while we are at it. */
+
+    /* Basically vars[i] = temp, where temp is the temporary currently
+       associated with the var. */
+    int *vars;
+} three_address_code;
+
+/* The context is a global, thanks POSIX yacc! */
+void ast_to_tac(three_address_code * tac);

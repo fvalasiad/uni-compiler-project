@@ -46,8 +46,22 @@ void yyerror(const char *, ...);
 
 %type<n> exp simp stmt stmts control block decl vars decls
 %type<type> unop binop asop
+
+%start program
+
 %%
 program : LEFTANG decls stmts RIGHTANG
+	{
+	    ctx.tree.type = ECOMMA;
+	    ctx.tree.params = malloc(2 * sizeof(node));
+	    if (!ctx.tree.params) {
+		fprintf(stderr, "error: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    ctx.tree.params[0] = $2;
+	    ctx.tree.params[1] = $3;
+	}
 	;
 
 decls : decls decl
@@ -121,21 +135,29 @@ stmt : simp { $$ = $1; }
 
 simp : ID asop exp
      {
-	$$.type = $2;
+	$$.type = EASSIGN;
 	$$.params = malloc(2 * sizeof(node));
 	if (!$$.params) {
 	    fprintf(stderr, "error: %s\n", strerror(errno));
 	    exit(EXIT_FAILURE);
 	}
-	$$.params[0].type = EID;
-	$$.params[0].id = context_find(&ctx, $1 + 1, *$1);
 
-	$$.params[1] = $3;
+	$$.params[0].type = EID;
+	$$.params[0].i = context_find(&ctx, $1 + 1, *$1);
+
+	$$.params[1].type = $2;
+	$$.params[1].params = malloc(2 * sizeof(node));
+	if (!$$.params[1].params) {
+	    fprintf(stderr, "error: %s\n", strerror(errno));
+	    exit(EXIT_FAILURE);
+	}
+	$$.params[1].params[0] = $$.params[0];
+	$$.params[1].params[1] = $3;
      }
      | PRINT exp
      {
 	$$.type = EPRINT;
-	$$.params = malloc(2 * sizeof(node));
+	$$.params = malloc(sizeof(node));
 	if (!$$.params) {
 	    fprintf(stderr, "error: %s\n", strerror(errno));
 	    exit(EXIT_FAILURE);
@@ -203,7 +225,7 @@ block : stmt { $$ = $1; }
 
 exp : LEFTPAREN exp RIGHTPAREN { $$ = $2; }
     | NUM { $$.type = ELITERAL; $$.i = $1; }
-    | ID { $$.type = EID; $$.id = context_find(&ctx, $1 + 1, *$1); }
+    | ID { $$.type = EID; $$.i = context_find(&ctx, $1 + 1, *$1); }
     | unop exp %prec UNOP 
     {
 	$$.type = $1;
@@ -227,11 +249,11 @@ exp : LEFTPAREN exp RIGHTPAREN { $$ = $2; }
     ;
 
 asop : ASSIGN { $$ = EASSIGN; }
-     | PLUSASSIGN { $$ = EPLUSASSIGN; }
-     | SUBASSIGN { $$ = ESUBASSIGN; }
-     | MULASSIGN { $$ = EMULASSIGN; }
-     | DIVASSIGN { $$ = EDIVASSIGN; }
-     | MODASSIGN { $$ = EMODASSIGN; }
+     | PLUSASSIGN { $$ = EPLUS; }
+     | SUBASSIGN { $$ = ESUB; }
+     | MULASSIGN { $$ = EMUL; }
+     | DIVASSIGN { $$ = EDIV; }
+     | MODASSIGN { $$ = EMOD; }
      ;
 
 binop : OR { $$ = EOR; }
@@ -254,23 +276,25 @@ unop : NOT { $$ = ENOT; }
      ;
 %%
 
-char *
+int
 context_find(const context *ctx, const char *id, char id_size)
 {
     int size = ctx->size;
     struct id *ids = ctx->ids;
+    int count = 0;
 
     /* There are size ids registered. */
     while (ids - ctx->ids < size && id_size != ids->size &&
 						memcmp(id, ids->id, id_size)) {
 	ids += ids->size;
+	++count;
     }
 
-    if (!size) {
-	return NULL;
+    if (ids - ctx->ids >= size) {
+	return -1;
     }
 
-    return ids->id;
+    return count;
 }
 
 void
