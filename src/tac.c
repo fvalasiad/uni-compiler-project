@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 
 extern context ctx;
@@ -11,29 +12,63 @@ extern context ctx;
 static void
 tac_new(three_address_code *tac)
 {
-    tac->program.capacity = TAC_DEFAULT_CAPACITY;
-    tac->program.size = 0;
-    tac->program.statements =
-	    malloc(tac->program.capacity * sizeof (statement));
-    if (!tac->program.statements) {
+    tac->capacity = TAC_DEFAULT_CAPACITY;
+    tac->size = 0;
+    tac->statements = malloc(tac->capacity * sizeof (statement));
+    if (!tac->statements) {
 	fprintf(stderr, "error : %s\n", strerror(errno));
 	exit(EXIT_FAILURE);
     }
+
+    tac->label = 0;
 }
 
 static statement *
 tac_next(three_address_code *tac)
 {
-    if (tac->program.size == tac->program.capacity) {
+    if (tac->size == tac->capacity) {
 	tac->capacity *= 2;
-	tac->statements = malloc(tac->capacity * sizeof (statement));
-	if (!tac_statements) {
+	tac->statements =
+		realloc(tac->statements, tac->capacity * sizeof (statement));
+	if (!tac->statements) {
 	    fprintf(stderr, "error : %s\n", strerror(errno));
 	    exit(EXIT_FAILURE);
 	}
     }
 
-    return tac->statements[tac->size++];
+    return tac->statements + tac->size++;
+}
+
+static loop *
+tac_loops_push(three_address_code *tac)
+{
+    if (tac->loops_size == tac->loops_capacity) {
+	tac->loops_capacity *= 2;
+	tac->loops = realloc(tac->loops, tac->loops_capacity * sizeof (loop));
+	if (!tac->loops) {
+	    fprintf(stderr, "error : %s\n", strerror(errno));
+	    exit(EXIT_FAILURE);
+	}
+    }
+
+    loop *l = tac->loops + tac->loops_size++;
+
+    l->label_start = tac->label++;
+    l->label_end = tac->label++;
+
+    return l;
+}
+
+static void
+tac_loops_pop(three_address_code *tac)
+{
+    --tac->loops_size;
+}
+
+static const loop *
+tac_loops_top(const three_address_code *tac)
+{
+    return tac->loops + (tac->loops_size - 1);
 }
 
 static int
@@ -62,30 +97,35 @@ recurse(node *n, three_address_code *tac)
 	    return s->tx;
 	}
 	case ENOT:{
+	    int arg = recurse(n->params, tac);
+
 	    s = tac_next(tac);
 	    s->type = SNOT;
 	    s->tx = tac->size - 1;
-	    s->ty = recurse(n->params);
+	    s->ty = arg;
 
 	    return s->tx;
 	}
 	case EUMINUS:{
+	    int arg = recurse(n->params, tac);
 	    statement *s = tac_next(tac);
 
 	    s->type = SUMINUS;
 	    s->tx = tac->size - 1;
-	    s->ty = recurse(n->params);
+	    s->ty = arg;
 
 	    return s->tx;
 	}
 
 /* I am extremely lazy */
 #define BINOP(OP) case E##OP: do { \
+    	    int arg1 = recurse(n->params, tac); \
+    	    int arg2 = recurse(n->params + 1, tac); \
 	    s = tac_next(tac); \
 	    s->type = S##OP; \
 	    s->tx = tac->size - 1; \
-	    s->ty = recurse(n->params); \
-	    s->tz = recurse(n->params + 1); \
+	    s->ty = arg1; \
+	    s->tz = arg2; \
 	    }while(0); return s->tx
 	    BINOP(MOD);
 	    BINOP(DIV);
@@ -102,11 +142,12 @@ recurse(node *n, three_address_code *tac)
 	    BINOP(OR);
 #undef BINOP
 	case EASSIGN:{
+	    int arg = recurse(n->params + 1, tac);
 	    statement *s = tac_next(tac);
 
 	    s->type = SMOV;
 	    s->tx = tac->size - 1;
-	    s->ty = recurse(n->params + 1);
+	    s->ty = arg;
 
 	    tac->vars[n->params->i] = s->tx;
 	    break;
@@ -115,10 +156,11 @@ recurse(node *n, three_address_code *tac)
 	    return tac->vars[n->i];
 	}
 	case EPRINT:{
+	    int arg = recurse(n->params, tac);
 	    statement *s = tac_next(tac);
 
 	    s->type = SPRINT;
-	    s->tx = recurse(n->params);
+	    s->tx = arg;
 	    break;
 	}
 	case ENOOP:{
@@ -128,6 +170,142 @@ recurse(node *n, three_address_code *tac)
 	    statement *s = tac_next(tac);
 
 	    s->type = SJ;
+	    s->tx = tac_loops_top(tac)->label_end;
+	    break;
+	}
+	case ECONTINUE:{
+	    statement *s = tac_next(tac);
+
+	    s->type = SJ;
+	    s->tx = tac_loops_top(tac)->label_start;
+	    break;
+	}
+	case EFOR:{
+	    loop *l = tac_loops_push(tac);
+
+	    /* Initialize counter */
+	    recurse(n->params, tac);
+
+	    /* Add a NOOP with a label at the start */
+	    statement *s = tac_next(tac);
+
+	    s->type = SNOOP;
+	    s->label = l->label_start;
+
+	    /* Expression, jump to end if zero */
+	    int arg = recurse(n->params + 1, tac);
+
+	    s = tac_next(tac);
+	    s->type = SJZ;
+	    s->tx = arg;
+	    s->ty = l->label_end;
+
+	    /* Next, follows the block */
+	    recurse(n->params + 2, tac);
+
+	    /* Finally, add the step and jump to start */
+	    recurse(n->params + 3, tac);
+
+	    s = tac_next(tac);
+	    s->type = SJ;
+	    s->tx = l->label_start;
+
+	    /* Mark the end of the loop */
+	    s = tac_next(tac);
+	    s->type = SNOOP;
+	    s->label = l->label_end;
+
+	    tac_loops_pop(tac);
+	    break;
+	}
+	case EWHILE:{
+	    loop *l = tac_loops_push(tac);
+
+	    /* Add a NOOP to label the start */
+	    statement *s = tac_next(tac);
+
+	    s->type = SNOOP;
+	    s->label = l->label_start;
+
+	    /* Expression, jump to end if zero */
+	    int arg = recurse(n->params, tac);
+
+	    s = tac_next(tac);
+
+	    s->type = SJZ;
+	    s->tx = arg;
+	    s->ty = l->label_end;
+
+	    /* Block */
+	    recurse(n->params + 1, tac);
+
+	    /* Jump to start */
+	    s = tac_next(tac);
+
+	    s->type = SJ;
+	    s->tx = l->label_start;
+
+	    /* Mark the end */
+	    s = tac_next(tac);
+
+	    s->type = SNOOP;
+	    s->label = l->label_end;
+
+	    tac_loops_pop(tac);
+	    break;
+	}
+	case EIF:{
+	    int end_label = tac->label++;
+	    int arg = recurse(n->params, tac);
+
+	    /* If zero jump to else block or fi */
+	    statement *s = tac_next(tac);
+
+	    s->type = SJZ;
+	    s->tx = arg;
+	    s->ty = end_label;
+
+	    /* the "if" block */
+	    recurse(n->params + 1, tac);
+
+	    if (n->size == 3) {	       /* Do we have an "else" block? */
+		/* If so, jump to the very end! */
+		int very_end_label = tac->label++;
+
+		s = tac_next(tac);
+
+		s->type = SJ;
+		s->tx = very_end_label;
+
+		/* Here resides the end_label */
+		s = tac_next(tac);
+
+		s->type = SNOOP;
+		s->label = end_label;
+
+		/* The "else" block */
+		recurse(n->params + 2, tac);
+
+		/* Here resides the very end label */
+		s = tac_next(tac);
+
+		s->type = SNOOP;
+		s->label = very_end_label;
+	    } else {		       /* Or maybe not? */
+		/* Then here resides the end label */
+
+		s = tac_next(tac);
+
+		s->type = SNOOP;
+		s->label = end_label;
+	    }
+	    break;
+	}
+	case ECOMMA:{
+	    for (int i = 0; i < n->size; ++i) {
+		recurse(n->params + i, tac);
+	    }
+	    break;
 	}
 
     }

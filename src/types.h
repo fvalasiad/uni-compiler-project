@@ -37,8 +37,8 @@ typedef struct context {
 	char id[];
     } *ids;
 
-    size_t size;		  /* How many (bytes) of them are there? */
-    size_t capacity;
+    int size;			  /* How many (bytes) of them are there? */
+    int capacity;
 
     node tree;
 } context;
@@ -57,12 +57,16 @@ void context_insert(context *, const char *, char);
 
 /* Once again, we need types, don't we? */
 typedef enum {
-    SMOV
+    SMOV, SNOT, SUMINUS, SMOD, SDIV, SMUL, SSUB, SPLUS, SBIGGER, SBIGGEREQ,
+    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SNOOP, SJZ
 } statement_type;
 
 typedef struct {
     /* What instruction is this? */
     statement_type type;
+
+    /* Any label present? */
+    int label;
 
     /* That's enough, I think */
     int tx;
@@ -71,17 +75,28 @@ typedef struct {
 } statement;
 
 typedef struct {
+    int label_start;
+    int label_end;
+} loop;
+
+typedef struct {
     /* A program is, if we think about it, just an array of those. */
     statement *statements;
-    size_t size;
-    size_t capacity;
+    int size;
+    int capacity;
 
     /* Let's carry some context while we are at it. */
 
     /* Basically vars[i] = temp, where temp is the temporary currently
        associated with the var. */
     int *vars;
+
+    int label;
+
+    loop *loops;
+    int loops_size;
+    int loops_capacity;
 } three_address_code;
 
 /* The context is a global, thanks POSIX yacc! */
-void ast_to_tac(three_address_code * tac);
+void ast_to_tac(three_address_code *tac);
