@@ -88,3 +88,5 @@
 -Tid
 -Tstatement
 -Tthree_address_code
+-Tinstruction
+-TMIXAL

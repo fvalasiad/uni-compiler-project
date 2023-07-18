@@ -100,3 +100,59 @@ typedef struct {
 
 /* The context is a global, thanks POSIX yacc! */
 void ast_to_tac(three_address_code *tac);
+
+/* Finally, let's generate the MIXAL code.
+ * This also means that we can finally move to instructions!
+ * From expressions, to statements, to instructions! Awesome! */
+
+/* Well, instructions also have types, duh. */
+typedef enum {
+    IADD, ISUB, IMUL, IDIV
+} instruction_type;
+
+/* In MIXAL, instructions are of the form:
+ *  ------------------------------------------------
+ * |   0   |   1   |   2   |   3   |   4   |   5    |
+ * ------------------------------------------------
+ * |        ADDRESS        | INDEX |  MOD  | OPCODE |
+ * ------------------------------------------------
+ *
+ *  where each cell is a single byte, that being 6 bits for MIXAL.
+ *  Cell 0 is sign.
+ *
+ *  A more abstract form:
+ *  MNEMONIC  ADDRESS,INDEX(MOD)
+ *
+ *  where:
+ *
+ *  MNEMONIC: a mnemonic for a particular opcode
+ *  ADDRESS: an ADDRESS to operate on from 0 to 3999
+ *  INDEX: an INDEX to the ADDRESS.
+ *  MOD: A field separator, effectively specifies which bytes are fetched.
+ *  
+ *  Given the extremely simple nature of our language, we can ignore
+ *  INDEX and MOD and so effectively the instructions we are going to
+ *  be dealing with are:
+ *
+ *  MNEMONIC  [ADDRESS]
+ *
+ *  Including the labels functionality that MIXAL supplies us with:
+ *  [LABEL] MNEMONIC  [ADDRESS]
+ * */
+typedef struct {
+    instruction_type type;	  /* The opcode */
+
+    int label;			  /* The label */
+
+    int address;		  /* The address at hand */
+} instruction;
+
+typedef struct {
+    /* An array... who would have thought. */
+    instruction *instructions;
+    int size;
+    int capacity;
+
+} MIXAL;
+
+void tac_to_MIXAL(three_address_code *tac, MIXAL *mixal);
