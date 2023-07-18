@@ -84,6 +84,7 @@ recurse(node *n, three_address_code *tac)
 		s->type = SMOV;
 		s->tx = i;
 		s->ty = 0;
+		s->tz = 1;	       /* Is it a constant? */
 
 		tac->vars[i] = i;
 	    }
@@ -94,6 +95,7 @@ recurse(node *n, three_address_code *tac)
 	    s->type = SMOV;
 	    s->tx = tac->size - 1;
 	    s->ty = n->i;
+	    s->tz = 0;
 	    return s->tx;
 	}
 	case ENOT:{
@@ -148,6 +150,7 @@ recurse(node *n, three_address_code *tac)
 	    s->type = SMOV;
 	    s->tx = tac->size - 1;
 	    s->ty = arg;
+	    s->tz = 0;
 
 	    tac->vars[n->params->i] = s->tx;
 	    break;
