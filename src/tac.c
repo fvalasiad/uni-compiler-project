@@ -189,8 +189,8 @@ recurse(node *n, three_address_code *tac)
 	    /* Add a NOOP with a label at the start */
 	    statement *s = tac_next(tac);
 
-	    s->type = SNOOP;
-	    s->label = l->label_start;
+	    s->type = SLABEL;
+	    s->tx = l->label_start;
 
 	    /* Expression, jump to end if zero */
 	    int arg = recurse(n->params + 1, tac);
@@ -212,8 +212,8 @@ recurse(node *n, three_address_code *tac)
 
 	    /* Mark the end of the loop */
 	    s = tac_next(tac);
-	    s->type = SNOOP;
-	    s->label = l->label_end;
+	    s->type = SLABEL;
+	    s->tx = l->label_end;
 
 	    tac_loops_pop(tac);
 	    break;
@@ -224,8 +224,8 @@ recurse(node *n, three_address_code *tac)
 	    /* Add a NOOP to label the start */
 	    statement *s = tac_next(tac);
 
-	    s->type = SNOOP;
-	    s->label = l->label_start;
+	    s->type = SLABEL;
+	    s->tx = l->label_start;
 
 	    /* Expression, jump to end if zero */
 	    int arg = recurse(n->params, tac);
@@ -248,8 +248,8 @@ recurse(node *n, three_address_code *tac)
 	    /* Mark the end */
 	    s = tac_next(tac);
 
-	    s->type = SNOOP;
-	    s->label = l->label_end;
+	    s->type = SLABEL;
+	    s->tx = l->label_end;
 
 	    tac_loops_pop(tac);
 	    break;
@@ -280,8 +280,8 @@ recurse(node *n, three_address_code *tac)
 		/* Here resides the end_label */
 		s = tac_next(tac);
 
-		s->type = SNOOP;
-		s->label = end_label;
+		s->type = SLABEL;
+		s->tx = end_label;
 
 		/* The "else" block */
 		recurse(n->params + 2, tac);
@@ -289,15 +289,15 @@ recurse(node *n, three_address_code *tac)
 		/* Here resides the very end label */
 		s = tac_next(tac);
 
-		s->type = SNOOP;
-		s->label = very_end_label;
+		s->type = SLABEL;
+		s->tx = very_end_label;
 	    } else {		       /* Or maybe not? */
 		/* Then here resides the end label */
 
 		s = tac_next(tac);
 
-		s->type = SNOOP;
-		s->label = end_label;
+		s->type = SLABEL;
+		s->tx = end_label;
 	    }
 	    break;
 	}

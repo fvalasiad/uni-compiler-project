@@ -99,7 +99,7 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 	    case SJ:{
 		break;
 	    }
-	    case SNOOP:{
+	    case SLABEL:{
 		break;
 	    }
 	    case SJZ:{

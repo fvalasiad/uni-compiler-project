@@ -58,15 +58,12 @@ void context_insert(context *, const char *, char);
 /* Once again, we need types, don't we? */
 typedef enum {
     SMOV, SNOT, SUMINUS, SMOD, SDIV, SMUL, SSUB, SPLUS, SBIGGER, SBIGGEREQ,
-    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SNOOP, SJZ
+    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SLABEL, SJZ
 } statement_type;
 
 typedef struct {
     /* What instruction is this? */
     statement_type type;
-
-    /* Any label present? */
-    int label;
 
     /* That's enough, I think */
     int tx;
