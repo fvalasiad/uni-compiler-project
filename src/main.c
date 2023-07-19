@@ -1,17 +1,11 @@
+#include	<stdlib.h>
 #include	<stdio.h>
-#include	<stdarg.h>
+#include	"types.h"
 
-void
-yyerror(const char *format, ...)
-{
-    fprintf(stderr, "error: ");
+extern FILE *yyin;
+extern context ctx;
 
-    va_list args;
-
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-}
+extern int yyparse(void);
 
 int
 yywrap()
@@ -20,7 +14,22 @@ yywrap()
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
-    printf("Hello, World!\n");
+    FILE *file = fopen(argv[1], "r");
+
+    if (!file) {
+	fprintf(stderr, "Error opening file.\n");
+	exit(EXIT_FAILURE);
+    }
+
+    yyin = file;
+
+    if (yyparse() != 0) {
+	fprintf(stderr, "Error parsing file.\n");
+	exit(EXIT_FAILURE);
+    }
+
+    fclose(file);
+    return 0;
 }

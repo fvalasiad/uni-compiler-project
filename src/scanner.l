@@ -9,10 +9,15 @@ unfortunately. */
 #include <stdio.h>
 #include <stdlib.h>
 
+int yycolumn = 0;
+extern int yycolumn;
+
 void yyerror(const char *, ...);
 
 int yywrap();
 %}
+
+%option yylineno
 
 letter	[a-zA-Z]
 digit	[0-9]
@@ -80,7 +85,12 @@ num	-?[1-9]{digit}*
 "*="	{return MULASSIGN;}
 "/="	{return DIVASSIGN;}
 "%="	{return MODASSIGN;}
-[ \t\n] {}
+[ \t] {}
+\n	{yycolumn = 0;}
 .	{ yyerror("unrecognized token\n"); }
+
+%{
+    yycolumn += yyleng;
+%}
 
 %%

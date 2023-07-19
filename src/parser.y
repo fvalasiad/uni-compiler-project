@@ -7,11 +7,17 @@
 
 #include "types.h"
 
+extern context ctx;
 context ctx;
+
+extern int yycolumn;
+extern int yylineno;
 
 int yylex();
 void yyerror(const char *, ...);
 %}
+
+%locations
 
 %union {
     int i;
@@ -275,6 +281,20 @@ unop : NOT { $$ = ENOT; }
      | SUB %prec NOT { $$ = EUMINUS; }
      ;
 %%
+
+#include <stdarg.h>
+
+void
+yyerror(const char *format, ...)
+{
+    fprintf(stderr, "%d:%d: error:", yylineno, yycolumn);
+
+    va_list args;
+
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+}
 
 int
 context_find(const context *ctx, const char *id, char id_size)
