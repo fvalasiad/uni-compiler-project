@@ -84,7 +84,6 @@ recurse(node *n, three_address_code *tac)
 		s->type = SMOV;
 		s->tx = i;
 		s->ty = 0;
-		s->tz = 1;	       /* Is it a constant? */
 
 		tac->vars[i] = i;
 	    }
@@ -95,7 +94,6 @@ recurse(node *n, three_address_code *tac)
 	    s->type = SMOV;
 	    s->tx = tac->size - 1;
 	    s->ty = n->i;
-	    s->tz = 0;
 	    return s->tx;
 	}
 	case ENOT:{
@@ -121,8 +119,8 @@ recurse(node *n, three_address_code *tac)
 
 /* I am extremely lazy */
 #define BINOP(OP) case E##OP: do { \
-    	    int arg1 = recurse(n->params, tac); \
     	    int arg2 = recurse(n->params + 1, tac); \
+    	    int arg1 = recurse(n->params, tac); \
 	    s = tac_next(tac); \
 	    s->type = S##OP; \
 	    s->tx = tac->size - 1; \
@@ -145,14 +143,8 @@ recurse(node *n, three_address_code *tac)
 #undef BINOP
 	case EASSIGN:{
 	    int arg = recurse(n->params + 1, tac);
-	    statement *s = tac_next(tac);
 
-	    s->type = SMOV;
-	    s->tx = tac->size - 1;
-	    s->ty = arg;
-	    s->tz = 0;
-
-	    tac->vars[n->params->i] = s->tx;
+	    tac->vars[n->params->i] = arg;
 	    break;
 	}
 	case EID:{

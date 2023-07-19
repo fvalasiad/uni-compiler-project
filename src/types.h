@@ -104,7 +104,8 @@ void ast_to_tac(three_address_code *tac);
 
 /* Well, instructions also have types, duh. */
 typedef enum {
-    IADD, ISUB, IMUL, IDIV
+    IADD, ISUB, IMUL, IDIV, ISTA, ILDA, IENNA, IENTA, IJAZ, IJSJ, IOUT,
+    ILDAN, ILDX, ISTX, ICMPA, IJG, IJLE, IJGE, IJL, IJNE, IJE, IJANZ
 } instruction_type;
 
 /* In MIXAL, instructions are of the form:
@@ -150,6 +151,11 @@ typedef struct {
     int size;
     int capacity;
 
+    /* What temporary does the accumulator contain? */
+    int ra;
+
+    /* Next instruction should have that label! */
+    int label;
 } MIXAL;
 
 void tac_to_MIXAL(three_address_code *tac, MIXAL *mixal);
