@@ -70,7 +70,6 @@ num	-?[1-9]{digit}*
 "%="	{return MODASSIGN;}
 [ \t] {}
 \n	{yycolumn = 0;}
-.	{ yyerror("unrecognized token"); }
 {id}	{
     if (yyleng >= sizeof(yylval.id)) {
 	yyerror("Consider using variables of length less than %d\n", sizeof(yylval.id));
@@ -93,5 +92,6 @@ num	-?[1-9]{digit}*
     }
     return NUM;
 }
+.	{ yyerror("unrecognized token"); }
 
 %%
