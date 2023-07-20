@@ -15,6 +15,7 @@ extern int yycolumn;
 #define YY_USER_ACTION \
     { \
 	yycolumn += yyleng; \
+	fprintf(stderr, yytext); \
     }
 
 void yyerror(const char *, ...);
@@ -28,7 +29,7 @@ alpha	[a-zA-Z]
 digit	[0-9]
 
 id	{alpha}({alpha}|{digit}|_)*
-num	-?[1-9]{digit}*
+num	-?{digit}*
 
 %%
 
