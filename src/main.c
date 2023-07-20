@@ -51,5 +51,14 @@ main(int argc, char *argv[])
     MIXAL mixal;
 
     tac_to_MIXAL(&tac, &mixal);
+
+    FILE *out = fopen("a.out", "w");
+
+    if (out == NULL) {
+	fprintf(stderr, "Error opening output file.\n");
+	exit(EXIT_FAILURE);
+    }
+
+    MIXAL_export(&mixal, out);
     return 0;
 }

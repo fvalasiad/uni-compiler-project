@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 /* ABSTRACT SYNTAX TREE OR STH PARSING-RELATED STUFF */
 
@@ -159,3 +160,6 @@ typedef struct {
 } MIXAL;
 
 void tac_to_MIXAL(three_address_code *tac, MIXAL *mixal);
+
+/* Now that we've finished, export it to a file! */
+void MIXAL_export(MIXAL *mixal, FILE *out);

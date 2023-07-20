@@ -5,6 +5,7 @@ mix_compiler_SOURCES = \
 		       src/scanner.l \
 		       src/tac.c \
 		       src/MIXAL.c \
+		       src/export.c \
 		       src/main.c
 
 AM_YFLAGS = -d
