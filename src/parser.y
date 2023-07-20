@@ -66,6 +66,7 @@ program : LEFTANG decls stmts RIGHTANG
 
 	    ctx.tree.params[0] = $2;
 	    ctx.tree.params[1] = $3;
+	    ctx.tree.size = 2;
 	}
 	;
 
