@@ -69,7 +69,7 @@ num	-?[1-9]{digit}*
 "/="	{return DIVASSIGN;}
 "%="	{return MODASSIGN;}
 [ \t] {}
-\n	{yycolumn = 0;}
+(\r)?\n	{yycolumn = 0;}
 {id}	{
     if (yyleng >= sizeof(yylval.id)) {
 	yyerror("Consider using variables of length less than %d\n", sizeof(yylval.id));
@@ -92,6 +92,7 @@ num	-?[1-9]{digit}*
     }
     return NUM;
 }
+<<EOF>>	{return YYEOF;}
 .	{ yyerror("unrecognized token"); }
 
 %%
