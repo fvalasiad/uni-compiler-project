@@ -12,7 +12,7 @@ MIXAL_init(MIXAL *mixal)
 {
     mixal->capacity = MIXAL_DEFAULT_CAPACITY;
     mixal->size = 0;
-    mixal->instructions = malloc(mixal->capacity);
+    mixal->instructions = malloc(mixal->capacity * sizeof (instruction));
 
     if (!mixal->instructions) {
 	fprintf(stderr, "error : %s\n", strerror(errno));
