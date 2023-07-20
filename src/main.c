@@ -1,8 +1,11 @@
 #include	<stdlib.h>
 #include	<stdio.h>
+#include	<string.h>
+#include	<errno.h>
 #include	"types.h"
 
 extern FILE *yyin;
+context ctx;
 extern context ctx;
 
 extern int yyparse(void);
@@ -24,6 +27,14 @@ main(int argc, char *argv[])
     }
 
     yyin = file;
+
+    ctx.size = 0;
+    ctx.capacity = 1024;
+    ctx.ids = malloc(ctx.capacity);
+    if (!ctx.ids) {
+	fprintf(stderr, "error : %s\n", strerror(errno));
+	exit(EXIT_FAILURE);
+    }
 
     if (yyparse() != 0) {
 	fprintf(stderr, "Error parsing file.\n");

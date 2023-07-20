@@ -8,7 +8,6 @@
 #include "types.h"
 
 extern context ctx;
-context ctx;
 
 extern int yycolumn;
 extern int yylineno;
