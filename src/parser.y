@@ -336,7 +336,7 @@ context_insert(context *ctx, const char *id, char id_size)
 	    
     }
 
-    struct id *ids = ctx->ids + ctx->size;
+    struct id *ids = ctx->ids + ctx->size++;
 
     ids->size = id_size;
     memcpy(ids->id, id, id_size);
