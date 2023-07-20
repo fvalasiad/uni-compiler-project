@@ -15,7 +15,6 @@ extern int yycolumn;
 #define YY_USER_ACTION \
     { \
 	yycolumn += yyleng; \
-	fprintf(stderr, yytext); \
     }
 
 void yyerror(const char *, ...);
