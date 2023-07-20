@@ -311,5 +311,6 @@ recurse(node *n, three_address_code *tac)
 void
 ast_to_tac(three_address_code *tac)
 {
+    tac_new(tac);
     recurse(&ctx.tree, tac);
 }

@@ -42,5 +42,14 @@ main(int argc, char *argv[])
     }
 
     fclose(file);
+
+    /* Contect->tree now contains the Abstract syntax tree! */
+    three_address_code tac;
+
+    ast_to_tac(&tac);
+
+    MIXAL mixal;
+
+    tac_to_MIXAL(&tac, &mixal);
     return 0;
 }
