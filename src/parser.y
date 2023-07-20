@@ -284,10 +284,12 @@ unop : NOT { $$ = ENOT; }
 
 #include <stdarg.h>
 
+extern int yyleng;
+
 void
 yyerror(const char *format, ...)
 {
-    fprintf(stderr, "%d:%d: error:", yylineno, yycolumn);
+    fprintf(stderr, "%d:%d: error:", yylineno, yycolumn - yyleng);
 
     va_list args;
 

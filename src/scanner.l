@@ -12,6 +12,11 @@ unfortunately. */
 int yycolumn = 0;
 extern int yycolumn;
 
+#define YY_USER_ACTION \
+    { \
+	yycolumn += yyleng; \
+    }
+
 void yyerror(const char *, ...);
 
 int yywrap();
@@ -19,36 +24,14 @@ int yywrap();
 
 %option yylineno
 
-letter	[a-zA-Z]
+alpha	[a-zA-Z]
 digit	[0-9]
 
-id	{letter}[{letter}{digit}_]*
+id	{alpha}({alpha}|{digit}|_)*
 num	-?[1-9]{digit}*
 
 %%
 
-{id}	{
-    if (yyleng >= sizeof(yylval.id)) {
-	yyerror("Consider using variables of length less than %d\n", sizeof(yylval.id));
-    }
-    yylval.id[0] = yyleng;
-
-    memcpy(yylval.id + 1, yytext, yyleng); /* First byte is size. */
-    return ID;
-}
-{num}	{
-    /* Uncertain if the requirements state that I should check for the
-       integer's valid range here, probably I guess? */
-    errno = 0;
-    yylval.i = strtol(yytext, NULL, 10);
-    if (errno == ERANGE) {
-	yyerror("Up to 4 bytes, respect the limits.");
-    } else if (errno) {
-	fprintf(stderr, "Error trying to parse a num: %s\n", strerror(errno));
-	exit(EXIT_FAILURE);
-    }
-    return NUM;
-}
 "var"	{return VAR;}
 "int"	{return INT;}
 "while"	{return WHILE;}
@@ -87,10 +70,28 @@ num	-?[1-9]{digit}*
 "%="	{return MODASSIGN;}
 [ \t] {}
 \n	{yycolumn = 0;}
-.	{ yyerror("unrecognized token\n"); }
+.	{ yyerror("unrecognized token"); }
+{id}	{
+    if (yyleng >= sizeof(yylval.id)) {
+	yyerror("Consider using variables of length less than %d\n", sizeof(yylval.id));
+    }
+    yylval.id[0] = yyleng;
 
-%{
-    yycolumn += yyleng;
-%}
+    memcpy(yylval.id + 1, yytext, yyleng); /* First byte is size. */
+    return ID;
+}
+{num}	{
+    /* Uncertain if the requirements state that I should check for the
+       integer's valid range here, probably I guess? */
+    errno = 0;
+    yylval.i = strtol(yytext, NULL, 10);
+    if (errno == ERANGE) {
+	yyerror("Up to 4 bytes, respect the limits.");
+    } else if (errno) {
+	fprintf(stderr, "Error trying to parse a num: %s\n", strerror(errno));
+	exit(EXIT_FAILURE);
+    }
+    return NUM;
+}
 
 %%
