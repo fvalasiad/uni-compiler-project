@@ -334,10 +334,10 @@ context_insert(context *ctx, const char *id, char id_size)
 	    fprintf(stderr, "error: %s\n", strerror(errno));
 	    exit(EXIT_FAILURE);
 	}
-	    
     }
 
-    struct id *ids = ctx->ids + ctx->size++;
+    struct id *ids = ctx->ids + ctx->size;
+    ctx->size += id_size;
 
     ids->size = id_size;
     memcpy(ids->id, id, id_size);
