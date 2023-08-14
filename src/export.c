@@ -47,11 +47,11 @@ MIXAL_export(MIXAL *mixal, FILE *out)
 		break;
 	    }
 	    case IJAZ:{
-		fprintf(out, "JAZ %d\n", inst->address);
+		fprintf(out, "JAZ l%d\n", inst->address);
 		break;
 	    }
 	    case IJSJ:{
-		fprintf(out, "JSJ %d\n", inst->address);
+		fprintf(out, "JSJ l%d\n", inst->address);
 		break;
 	    }
 	    case IOUT:{
@@ -75,31 +75,31 @@ MIXAL_export(MIXAL *mixal, FILE *out)
 		break;
 	    }
 	    case IJG:{
-		fprintf(out, "JG %d\n", inst->address);
+		fprintf(out, "JG l%d\n", inst->address);
 		break;
 	    }
 	    case IJLE:{
-		fprintf(out, "JLE %d\n", inst->address);
+		fprintf(out, "JLE l%d\n", inst->address);
 		break;
 	    }
 	    case IJGE:{
-		fprintf(out, "JGE %d\n", inst->address);
+		fprintf(out, "JGE l%d\n", inst->address);
 		break;
 	    }
 	    case IJL:{
-		fprintf(out, "JL %d\n", inst->address);
+		fprintf(out, "JL l%d\n", inst->address);
 		break;
 	    }
 	    case IJNE:{
-		fprintf(out, "JNE %d\n", inst->address);
+		fprintf(out, "JNE l%d\n", inst->address);
 		break;
 	    }
 	    case IJE:{
-		fprintf(out, "JE %d\n", inst->address);
+		fprintf(out, "JE l%d\n", inst->address);
 		break;
 	    }
 	    case IJANZ:{
-		fprintf(out, "JANZ %d\n", inst->address);
+		fprintf(out, "JANZ l%d\n", inst->address);
 		break;
 	    }
 	}
