@@ -47,12 +47,20 @@ main(int argc, char *argv[])
     three_address_code tac;
 
     ast_to_tac(&tac);
+    FILE *out = fopen("tac.out", "w");
+
+    if (out == NULL) {
+	fprintf(stderr, "Error opening tac output file.\n");
+	exit(EXIT_FAILURE);
+    }
+
+    ast_print(&tac, out);
 
     MIXAL mixal;
 
     tac_to_MIXAL(&tac, &mixal);
 
-    FILE *out = fopen("a.out", "w");
+    out = fopen("a.out", "w");
 
     if (out == NULL) {
 	fprintf(stderr, "Error opening output file.\n");

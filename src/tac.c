@@ -80,12 +80,12 @@ recurse(node *n, three_address_code *tac)
 	case EDECL:{
 	    s = tac_next(tac);
 	    s->type = SMOV;
-	    s->tx = 0;
+	    s->tx = tac->size - 1;
 	    s->ty = 0;
 
 	    tac->vars = malloc(n->size * sizeof (int));
 	    for (int i = 0; i < n->size; ++i) {
-		tac->vars[i] = 0;
+		tac->vars[i] = s->tx;
 	    }
 	    break;
 	}
@@ -94,7 +94,6 @@ recurse(node *n, three_address_code *tac)
 	    s->type = SMOV;
 	    s->tx = tac->size - 1;
 	    s->ty = n->i;
-	    printf("%d\n", n->i);
 	    return s->tx;
 	}
 	case ENOT:{
@@ -314,4 +313,49 @@ ast_to_tac(three_address_code *tac)
 {
     tac_new(tac);
     recurse(&ctx.tree, tac);
+}
+
+void
+ast_print(three_address_code *tac, FILE *out)
+{
+#define ONE(instr, s) case S##instr: fprintf(out, "%s t%d\n", #instr, s.tx); break
+#define TWO(instr, s) case S##instr: fprintf(out, "%s t%d, t%d\n", #instr, s.tx, s.ty); break
+#define THREE(instr, s) case S##instr: fprintf(out, "%s t%d, t%d, t%d\n", #instr, s.tx, s.ty, s.tz); break
+
+    for (int i = 0; i < tac->size; ++i) {
+	switch (tac->statements[i].type) {
+	    case SMOV:
+		fprintf(out, "MOV t%d, %d\n", tac->statements[i].tx,
+			tac->statements[i].ty);
+		break;
+		TWO(NOT, tac->statements[i]);
+		TWO(UMINUS, tac->statements[i]);
+		THREE(MOD, tac->statements[i]);
+		THREE(DIV, tac->statements[i]);
+		THREE(MUL, tac->statements[i]);
+		THREE(SUB, tac->statements[i]);
+		THREE(PLUS, tac->statements[i]);
+		THREE(BIGGER, tac->statements[i]);
+		THREE(BIGGEREQ, tac->statements[i]);
+		THREE(LESSEQ, tac->statements[i]);
+		THREE(LESS, tac->statements[i]);
+		THREE(NOTEQ, tac->statements[i]);
+		THREE(EQ, tac->statements[i]);
+		THREE(AND, tac->statements[i]);
+		THREE(OR, tac->statements[i]);
+		ONE(PRINT, tac->statements[i]);
+	    case SJ:
+		fprintf(out, "J l%d\n", tac->statements[i].tx);
+		break;
+	    case SLABEL:
+		fprintf(out, "LABEL l%d\n", tac->statements[i].tx);
+		break;
+	    case SJZ:
+		fprintf(out, "JZ l%d\n", tac->statements[i].tx);
+		break;
+	}
+    }
+#undef ONE
+#undef TWO
+#undef THREE
 }

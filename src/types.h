@@ -99,6 +99,8 @@ typedef struct {
 /* The context is a global, thanks POSIX yacc! */
 void ast_to_tac(three_address_code *tac);
 
+void ast_print(three_address_code *tac, FILE *out);
+
 /* Finally, let's generate the MIXAL code.
  * This also means that we can finally move to instructions!
  * From expressions, to statements, to instructions! Awesome! */
