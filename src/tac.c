@@ -78,14 +78,14 @@ recurse(node *n, three_address_code *tac)
 
     switch (n->type) {
 	case EDECL:{
+	    s = tac_next(tac);
+	    s->type = SMOV;
+	    s->tx = 0;
+	    s->ty = 0;
+
 	    tac->vars = malloc(n->size * sizeof (int));
 	    for (int i = 0; i < n->size; ++i) {
-		s = tac_next(tac);
-		s->type = SMOV;
-		s->tx = i;
-		s->ty = 0;
-
-		tac->vars[i] = i;
+		tac->vars[i] = 0;
 	    }
 	    break;
 	}
@@ -94,6 +94,7 @@ recurse(node *n, three_address_code *tac)
 	    s->type = SMOV;
 	    s->tx = tac->size - 1;
 	    s->ty = n->i;
+	    printf("%d\n", n->i);
 	    return s->tx;
 	}
 	case ENOT:{

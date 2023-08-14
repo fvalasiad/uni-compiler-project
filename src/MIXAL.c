@@ -77,6 +77,10 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 		    inst->address = s->ty;
 		}
 
+		inst = MIXAL_next(mixal);
+		inst->type = ISTA;
+		inst->address = s->tx;
+
 		mixal->ra = s->tx;
 		break;
 	    }
