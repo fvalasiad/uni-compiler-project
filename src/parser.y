@@ -254,7 +254,8 @@ exp : LEFTPAREN exp RIGHTPAREN { $$ = $2; }
 	    fprintf(stderr, "error: %s\n", strerror(errno));
 	    exit(EXIT_FAILURE);
 	}
-	$$.params[0] = $1; $$.params[1];
+	$$.params[0] = $1;
+	$$.params[1] = $3;
     }
     ;
 
