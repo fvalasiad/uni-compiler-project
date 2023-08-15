@@ -353,9 +353,9 @@ print_recurse(node *n, int depth, FILE *out)
 {
     for (int i = 0; i < depth; ++i) fprintf(out, "\t");
     int count;
-#define lazy(t, c) case E##t: fprintf(out, "%s\n", #t); fflush(out); count = c; break
+#define lazy(t, c) case E##t: fprintf(out, "%s\n", #t); count = c; break
     switch(n->type) {
-	lazy(LITERAL, 0);
+	case ELITERAL: fprintf(out, "LITERAL %d\n", n->i); count = 0; break;
 	lazy(NOT, 1);
 	lazy(UMINUS, 1);
 	lazy(MOD, 2);
@@ -372,13 +372,13 @@ print_recurse(node *n, int depth, FILE *out)
 	lazy(AND, 2);
 	lazy(OR, 2);
 	lazy(ASSIGN, 2);
-	lazy(ID, 0);
+	case EID: fprintf(out, "ID %d\n", n->i); count = 0; break;
 	lazy(PRINT, 1);
 	lazy(NOOP, 0);
 	lazy(BREAK, 0);
 	lazy(CONTINUE, 0);
 	lazy(COMMA, n->size);
-	lazy(DECL, 0);
+	case EDECL: fprintf(out, "DECL %d\n", n->size); count = 0; break;
 	lazy(FOR, 4);
 	lazy(WHILE, 2);
 	lazy(IF, 2);
