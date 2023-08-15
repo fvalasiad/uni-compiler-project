@@ -48,6 +48,8 @@ int context_find(const context *, const char *, char);
 
 void context_insert(context *, const char *, char);
 
+void ast_print(FILE *out);
+
 /* THREE ADDRESS CODE IR OR STH IDK I came up with this on the fly
  * upon seeing some MIXAL docs. It reminds me of 8086 in some aspects
  * so I'll probably be biased.
@@ -99,7 +101,7 @@ typedef struct {
 /* The context is a global, thanks POSIX yacc! */
 void ast_to_tac(three_address_code *tac);
 
-void ast_print(three_address_code *tac, FILE *out);
+void tac_print(three_address_code *tac, FILE *out);
 
 /* Finally, let's generate the MIXAL code.
  * This also means that we can finally move to instructions!

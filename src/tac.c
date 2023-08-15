@@ -316,7 +316,7 @@ ast_to_tac(three_address_code *tac)
 }
 
 void
-ast_print(three_address_code *tac, FILE *out)
+tac_print(three_address_code *tac, FILE *out)
 {
 #define ONE(instr, s) case S##instr: fprintf(out, "%s t%d\n", #instr, s.tx); break
 #define TWO(instr, s) case S##instr: fprintf(out, "%s t%d, t%d\n", #instr, s.tx, s.ty); break

@@ -44,17 +44,28 @@ main(int argc, char *argv[])
     fclose(file);
 
     /* Contect->tree now contains the Abstract syntax tree! */
+    FILE *out = fopen("ast.out", "w");
+
+    if (out == NULL) {
+	fprintf(stderr, "Error opening ast output file .\n");
+	exit(EXIT_FAILURE);
+    }
+
+    ast_print(out);
+    fclose(out);
+
     three_address_code tac;
 
     ast_to_tac(&tac);
-    FILE *out = fopen("tac.out", "w");
+    out = fopen("tac.out", "w");
 
     if (out == NULL) {
 	fprintf(stderr, "Error opening tac output file.\n");
 	exit(EXIT_FAILURE);
     }
 
-    ast_print(&tac, out);
+    tac_print(&tac, out);
+    fclose(out);
 
     MIXAL mixal;
 

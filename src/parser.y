@@ -342,3 +342,51 @@ context_insert(context *ctx, const char *id, char id_size)
     ids->size = id_size;
     memcpy(ids->id, id, id_size);
 }
+
+static void
+print_recurse(node *n, int depth, FILE *out)
+{
+    for (int i = 0; i < depth; ++i) fprintf(out, "\t");
+    int count;
+#define lazy(t, c) case E##t: fprintf(out, "%s\n", #t); fflush(out); count = c; break
+    switch(n->type) {
+	lazy(LITERAL, 0);
+	lazy(NOT, 1);
+	lazy(UMINUS, 1);
+	lazy(MOD, 2);
+	lazy(DIV, 2);
+	lazy(MUL, 2);
+	lazy(SUB, 2);
+	lazy(PLUS, 2);
+	lazy(BIGGEREQ, 2);
+	lazy(BIGGER, 2);
+	lazy(LESSEQ, 2);
+	lazy(LESS, 2);
+	lazy(NOTEQ, 2);
+	lazy(EQ, 2);
+	lazy(AND, 2);
+	lazy(OR, 2);
+	lazy(ASSIGN, 2);
+	lazy(ID, 0);
+	lazy(PRINT, 1);
+	lazy(NOOP, 0);
+	lazy(BREAK, 0);
+	lazy(CONTINUE, 0);
+	lazy(COMMA, n->size);
+	lazy(DECL, 0);
+	lazy(FOR, 4);
+	lazy(WHILE, 2);
+	lazy(IF, 2);
+    }
+#undef lazy
+
+    for (int i = 0; i < count; ++i) {
+	print_recurse(n->params + i, depth + 1, out);
+    }
+}
+
+void
+ast_print(FILE *out)
+{
+    print_recurse(&ctx.tree, 0, out);
+}
