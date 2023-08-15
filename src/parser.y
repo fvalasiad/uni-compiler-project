@@ -151,14 +151,18 @@ simp : ID asop exp
 	$$.params[0].type = EID;
 	$$.params[0].i = context_find(&ctx, $1 + 1, *$1);
 
-	$$.params[1].type = $2;
-	$$.params[1].params = malloc(2 * sizeof(node));
-	if (!$$.params[1].params) {
-	    fprintf(stderr, "error: %s\n", strerror(errno));
-	    exit(EXIT_FAILURE);
+	if ($2 != EASSIGN) {
+	    $$.params[1].type = $2;
+	    $$.params[1].params = malloc(2 * sizeof(node));
+	    if (!$$.params[1].params) {
+		fprintf(stderr, "error: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+	    $$.params[1].params[0] = $$.params[0];
+	    $$.params[1].params[1] = $3;
+	} else {
+	    $$.params[1] = $3;
 	}
-	$$.params[1].params[0] = $$.params[0];
-	$$.params[1].params[1] = $3;
      }
      | PRINT exp
      {
