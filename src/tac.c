@@ -351,7 +351,8 @@ tac_print(three_address_code *tac, FILE *out)
 		fprintf(out, "LABEL l%d\n", tac->statements[i].tx);
 		break;
 	    case SJZ:
-		fprintf(out, "JZ l%d\n", tac->statements[i].tx);
+		fprintf(out, "JZ t%d, l%d\n", tac->statements[i].tx,
+			tac->statements[i].ty);
 		break;
 	}
     }
