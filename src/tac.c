@@ -21,6 +21,7 @@ tac_new(three_address_code *tac)
     }
 
     tac->label = 0;
+    tac->tcount = 0;
 }
 
 static statement *
@@ -80,7 +81,7 @@ recurse(node *n, three_address_code *tac)
 	case EDECL:{
 	    s = tac_next(tac);
 	    s->type = SMOV;
-	    s->tx = tac->size - 1;
+	    s->tx = tac->tcount++;
 	    s->ty = 0;
 
 	    tac->vars = malloc(n->size * sizeof (int));
@@ -92,7 +93,7 @@ recurse(node *n, three_address_code *tac)
 	case ELITERAL:{
 	    s = tac_next(tac);
 	    s->type = SMOV;
-	    s->tx = tac->size - 1;
+	    s->tx = tac->tcount++;
 	    s->ty = n->i;
 	    return s->tx;
 	}
@@ -101,7 +102,7 @@ recurse(node *n, three_address_code *tac)
 
 	    s = tac_next(tac);
 	    s->type = SNOT;
-	    s->tx = tac->size - 1;
+	    s->tx = tac->tcount++;
 	    s->ty = arg;
 
 	    return s->tx;
@@ -111,7 +112,7 @@ recurse(node *n, three_address_code *tac)
 	    statement *s = tac_next(tac);
 
 	    s->type = SUMINUS;
-	    s->tx = tac->size - 1;
+	    s->tx = tac->tcount++;
 	    s->ty = arg;
 
 	    return s->tx;
@@ -123,7 +124,7 @@ recurse(node *n, three_address_code *tac)
     	    int arg1 = recurse(n->params, tac); \
 	    s = tac_next(tac); \
 	    s->type = S##OP; \
-	    s->tx = tac->size - 1; \
+	    s->tx = tac->tcount++; \
 	    s->ty = arg1; \
 	    s->tz = arg2; \
 	    }while(0); return s->tx

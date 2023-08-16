@@ -61,17 +61,21 @@ void ast_print(FILE *out);
 /* Once again, we need types, don't we? */
 typedef enum {
     SMOV, SNOT, SUMINUS, SMOD, SDIV, SMUL, SSUB, SPLUS, SBIGGER, SBIGGEREQ,
-    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SLABEL, SJZ
+    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SLABEL, SJZ, SCALL
 } statement_type;
 
 typedef struct {
     /* What instruction is this? */
     statement_type type;
 
-    /* That's enough, I think */
+    /* These fit all statements but the call statement */
     int tx;
     int ty;
     int tz;
+
+    /* The call statement has an arbitrary count of arguments */
+    int *t;
+    int size;
 } statement;
 
 typedef struct {
@@ -86,6 +90,8 @@ typedef struct {
     int capacity;
 
     /* Let's carry some context while we are at it. */
+
+    int tcount;			  /* temporaries */
 
     /* Basically vars[i] = temp, where temp is the temporary currently
        associated with the var. */
