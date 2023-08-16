@@ -68,12 +68,11 @@ typedef struct {
     /* What instruction is this? */
     statement_type type;
 
-    /* These fit all statements but the call statement */
     int tx;
     int ty;
     int tz;
 
-    /* The call statement has an arbitrary count of arguments */
+    /* For parameterized labels and jumps */
     int *t;
     int size;
 } statement;
@@ -96,6 +95,7 @@ typedef struct {
     /* Basically vars[i] = temp, where temp is the temporary currently
        associated with the var. */
     int *vars;
+    int vars_size;
 
     int label;
 
