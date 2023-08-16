@@ -61,7 +61,7 @@ void ast_print(FILE *out);
 /* Once again, we need types, don't we? */
 typedef enum {
     SMOV, SNOT, SUMINUS, SMOD, SDIV, SMUL, SSUB, SPLUS, SBIGGER, SBIGGEREQ,
-    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SLABEL, SJZ, SCALL
+    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SLABEL, SJZ
 } statement_type;
 
 typedef struct {
