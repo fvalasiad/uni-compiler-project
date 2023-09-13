@@ -21,7 +21,7 @@ tac_new(three_address_code *tac)
     }
 
     tac->label = 0;
-    tac->tcount = 0;
+    tac->tcount = 21;		       /* 0-20 reserved by MIX */
 }
 
 static statement *
@@ -145,8 +145,13 @@ recurse(node *n, three_address_code *tac)
 #undef BINOP
 	case EASSIGN:{
 	    int arg = recurse(n->params + 1, tac);
+	    statement *s = tac_next(tac);
 
-	    tac->vars[n->params->i] = arg;
+	    s->type = SASSIGN;
+	    s->tx = tac->tcount++;
+	    s->ty = arg;
+
+	    tac->vars[n->params->i] = s->tx;
 	    break;
 	}
 	case EID:{
@@ -189,14 +194,16 @@ recurse(node *n, three_address_code *tac)
 	    s->tx = l->label_start;
 
 	    s->size = tac->vars_size;
-	    s->t = malloc(s->size * sizeof (int));
+	    s->t = malloc(2 * s->size * sizeof (int));
 	    if (s->t == NULL) {
 		fprintf(stderr, "error : %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	    }
 
 	    for (int i = 0; i < s->size; ++i) {
-		s->t[i] = tac->vars[i];
+		s->t[2 * i] = tac->vars[i];
+		tac->vars[i] = tac->tcount++;
+		s->t[2 * i + 1] = tac->vars[i];
 	    }
 
 	    /* Add a NOOP with a label at the start */
@@ -213,9 +220,10 @@ recurse(node *n, three_address_code *tac)
 	    }
 
 	    for (int i = 0; i < s->size; ++i) {
-		tac->vars[i] = tac->tcount++;
 		s->t[i] = tac->vars[i];
 	    }
+
+	    statement *label_reserve = s;
 
 	    /* Expression, jump to end if zero */
 	    int arg = recurse(n->params + 1, tac);
@@ -238,14 +246,15 @@ recurse(node *n, three_address_code *tac)
 	    s->tx = l->label_start;
 
 	    s->size = tac->vars_size;
-	    s->t = malloc(s->size * sizeof (int));
+	    s->t = malloc(2 * s->size * sizeof (int));
 	    if (s->t == NULL) {
 		fprintf(stderr, "error : %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	    }
 
 	    for (int i = 0; i < s->size; ++i) {
-		s->t[i] = tac->vars[i];
+		s->t[2 * i] = tac->vars[i];
+		s->t[2 * i + 1] = label_reserve->t[i];
 	    }
 
 	    /* Mark the end of the loop */
@@ -267,14 +276,16 @@ recurse(node *n, three_address_code *tac)
 	    s->tx = l->label_start;
 
 	    s->size = tac->vars_size;
-	    s->t = malloc(s->size * sizeof (int));
+	    s->t = malloc(2 * s->size * sizeof (int));
 	    if (s->t == NULL) {
 		fprintf(stderr, "error : %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	    }
 
 	    for (int i = 0; i < s->size; ++i) {
-		s->t[i] = tac->vars[i];
+		s->t[2 * i] = tac->vars[i];
+		tac->vars[i] = tac->tcount++;
+		s->t[2 * i + 1] = tac->vars[i];
 	    }
 
 	    /* Add a NOOP to label the start */
@@ -291,9 +302,10 @@ recurse(node *n, three_address_code *tac)
 	    }
 
 	    for (int i = 0; i < s->size; ++i) {
-		tac->vars[i] = tac->tcount++;
 		s->t[i] = tac->vars[i];
 	    }
+
+	    statement *label_reserve = s;
 
 	    /* Expression, jump to end if zero */
 	    int arg = recurse(n->params, tac);
@@ -316,14 +328,15 @@ recurse(node *n, three_address_code *tac)
 	    s->tx = l->label_start;
 
 	    s->size = tac->vars_size;
-	    s->t = malloc(s->size * sizeof (int));
+	    s->t = malloc(2 * s->size * sizeof (int));
 	    if (s->t == NULL) {
 		fprintf(stderr, "error : %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	    }
 
 	    for (int i = 0; i < s->size; ++i) {
-		s->t[i] = tac->vars[i];
+		s->t[2 * i] = tac->vars[i];
+		s->t[2 * i + 1] = label_reserve->t[i];
 	    }
 
 	    /* Mark the end */
@@ -413,6 +426,77 @@ ast_to_tac(three_address_code *tac)
 }
 
 void
+tac_right_shift(three_address_code *tac, int pos, int count)
+{
+    statement *dest;
+    statement *src = tac->statements;
+
+    if (tac->size + count > tac->capacity) {
+	while (tac->size + count > tac->capacity) {
+	    tac->capacity *= 2;
+	}
+
+	dest = malloc(tac->capacity * sizeof (statement));
+
+	for (int i = 0; i < pos; ++i) {
+	    memcpy(dest + i, src + i, sizeof (statement));
+	}
+    } else {
+	dest = src;
+    }
+
+    for (int i = tac->size - 1; i >= pos; --i) {
+	memcpy(dest + i + count, src + i, sizeof (statement));
+    }
+
+    if (dest != src) {
+	free(src);
+	tac->statements = dest;
+    }
+
+    tac->size += count;
+}
+
+void
+tac_deSSA(three_address_code *tac)
+{
+    int i = 0;
+
+    while (i < tac->size) {
+	statement *s = tac->statements + i;
+
+	switch (s->type) {
+	    case SJZ:
+	    case SJ:{
+		if (s->size == 0) {
+		    ++i;
+		    break;
+		}
+
+		int count = s->size;
+
+		tac_right_shift(tac, i, count);
+		s = tac->statements + i + count;	/* Might have
+							   reallocated */
+
+		for (int j = 0; j < s->size; ++j) {
+		    tac->statements[i].type = SASSIGN;
+
+		    tac->statements[i].tx = s->t[2 * j + 1];
+		    tac->statements[i].ty = s->t[2 * j];
+		    ++i;
+		}
+
+		++i;
+		break;
+	    }
+	    default:
+		++i;
+	}
+    }
+}
+
+void
 tac_print(three_address_code *tac, FILE *out)
 {
     statement *s;
@@ -427,6 +511,7 @@ tac_print(three_address_code *tac, FILE *out)
 		fprintf(out, "MOV t%d, %d\n", tac->statements[i].tx,
 			tac->statements[i].ty);
 		break;
+		TWO(ASSIGN, tac->statements[i]);
 		TWO(NOT, tac->statements[i]);
 		TWO(UMINUS, tac->statements[i]);
 		THREE(MOD, tac->statements[i]);
@@ -447,10 +532,10 @@ tac_print(three_address_code *tac, FILE *out)
 		s = tac->statements + i;
 		fprintf(out, "J l%d(", s->tx);
 		for (int j = 0; j < s->size - 1; ++j) {
-		    fprintf(out, "t%d, ", s->t[j]);
+		    fprintf(out, "t%d, ", s->t[2 * j]);
 		}
 		if (s->size) {
-		    fprintf(out, "t%d)\n", s->t[s->size - 1]);
+		    fprintf(out, "t%d)\n", s->t[2 * (s->size - 1)]);
 		} else {
 		    fprintf(out, ")\n");
 		}
@@ -471,10 +556,10 @@ tac_print(three_address_code *tac, FILE *out)
 		s = tac->statements + i;
 		fprintf(out, "JZ t%d, l%d(", s->tx, s->ty);
 		for (int j = 0; j < s->size - 1; ++j) {
-		    fprintf(out, "t%d, ", s->t[j]);
+		    fprintf(out, "t%d, ", s->t[2 * j]);
 		}
 		if (s->size) {
-		    fprintf(out, "t%d)\n", s->t[s->size - 1]);
+		    fprintf(out, "t%d)\n", s->t[2 * (s->size - 1)]);
 		} else {
 		    fprintf(out, ")\n");
 		}

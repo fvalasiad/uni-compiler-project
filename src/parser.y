@@ -311,11 +311,10 @@ context_find(const context *ctx, const char *id, char id_size)
     int size = ctx->size;
     struct id *ids = ctx->ids;
     int count = 0;
-
     /* There are size ids registered. */
-    while (ids - ctx->ids < size && id_size != ids->size &&
-						memcmp(id, ids->id, id_size)) {
-	ids += ids->size;
+    while (ids - ctx->ids < size && !(id_size == ids->size &&
+						!memcmp(id, ids->id, id_size))) {
+	ids += (ids->size + sizeof(struct id));
 	++count;
     }
 
@@ -342,7 +341,7 @@ context_insert(context *ctx, const char *id, char id_size)
     }
 
     struct id *ids = ctx->ids + ctx->size;
-    ctx->size += id_size;
+    ctx->size += id_size + sizeof(struct id);
 
     ids->size = id_size;
     memcpy(ids->id, id, id_size);

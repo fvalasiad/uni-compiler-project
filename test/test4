@@ -1,0 +1,13 @@
+{
+   var a, b, c, result: int;
+   a = 0;
+   b = 1;
+   c = 2;
+   result = 0;
+
+   result = a && (b > c);
+   print result;
+
+   result = a || (b < c);
+   print result;
+}

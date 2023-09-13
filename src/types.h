@@ -61,7 +61,7 @@ void ast_print(FILE *out);
 /* Once again, we need types, don't we? */
 typedef enum {
     SMOV, SNOT, SUMINUS, SMOD, SDIV, SMUL, SSUB, SPLUS, SBIGGER, SBIGGEREQ,
-    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SLABEL, SJZ
+    SLESSEQ, SLESS, SNOTEQ, SEQ, SAND, SOR, SPRINT, SJ, SLABEL, SJZ, SASSIGN
 } statement_type;
 
 typedef struct {
@@ -107,6 +107,8 @@ typedef struct {
 /* The context is a global, thanks POSIX yacc! */
 void ast_to_tac(three_address_code *tac);
 
+void tac_deSSA(three_address_code *tac);
+
 void tac_print(three_address_code *tac, FILE *out);
 
 /* Finally, let's generate the MIXAL code.
@@ -116,7 +118,7 @@ void tac_print(three_address_code *tac, FILE *out);
 /* Well, instructions also have types, duh. */
 typedef enum {
     IADD, ISUB, IMUL, IDIV, ISTA, ILDA, IENNA, IENTA, IJAZ, IJSJ, IOUT,
-    ILDAN, ILDX, ISTX, ICMPA, IJG, IJLE, IJGE, IJL, IJNE, IJE, IJANZ
+    ILDAN, ILDX, ISTX, ICMPA, IJG, IJLE, IJGE, IJL, IJNE, IJE, IJANZ, ICHAR
 } instruction_type;
 
 /* In MIXAL, instructions are of the form:

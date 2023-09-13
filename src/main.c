@@ -67,11 +67,22 @@ main(int argc, char *argv[])
     tac_print(&tac, out);
     fclose(out);
 
+    tac_deSSA(&tac);
+    out = fopen("tac_deSSA.out", "w");
+
+    if (out == NULL) {
+	fprintf(stderr, "Error opening tac_deSSA output file.\n");
+	exit(EXIT_FAILURE);
+    }
+
+    tac_print(&tac, out);
+    fclose(out);
+
     MIXAL mixal;
 
     tac_to_MIXAL(&tac, &mixal);
 
-    out = fopen("a.out", "w");
+    out = fopen("out.mixal", "w");
 
     if (out == NULL) {
 	fprintf(stderr, "Error opening output file.\n");

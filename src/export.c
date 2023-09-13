@@ -3,13 +3,20 @@
 void
 MIXAL_export(MIXAL *mixal, FILE *out)
 {
-    fprintf(out, "ORIG 2000\n");
+    fprintf(out, "   ORIG 2000\n");
     for (int i = 0; i < mixal->size; ++i) {
 	instruction *inst = mixal->instructions + i;
 
+	if (inst->address < 0) {
+	    continue;
+	}
+
 	if (inst->label >= 0) {
 	    fprintf(out, "l%d ", inst->label);
+	} else {
+	    fprintf(out, "   ");
 	}
+
 	switch (inst->type) {
 	    case IADD:{
 		fprintf(out, "ADD %d\n", inst->address);
@@ -28,9 +35,6 @@ MIXAL_export(MIXAL *mixal, FILE *out)
 		break;
 	    }
 	    case ISTA:{
-		if (inst->address < 0) {
-		    continue;
-		}
 		fprintf(out, "STA %d\n", inst->address);
 		break;
 	    }
@@ -55,7 +59,11 @@ MIXAL_export(MIXAL *mixal, FILE *out)
 		break;
 	    }
 	    case IOUT:{
-		fprintf(out, "OUT %d\n", inst->address);
+		fprintf(out, "OUT %d(19)\n", inst->address);
+		break;
+	    }
+	    case ICHAR:{
+		fprintf(out, "CHAR\n");
 		break;
 	    }
 	    case ILDAN:{
@@ -105,5 +113,10 @@ MIXAL_export(MIXAL *mixal, FILE *out)
 	}
     }
 
-    fprintf(out, "HLT\nEND 2000");
+    if (mixal->label >= 0) {
+	fprintf(out, "l%d ", mixal->label);
+    } else {
+	fprintf(out, "   ");
+    }
+    fprintf(out, "HLT\n   END 2000\n");
 }

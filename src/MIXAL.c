@@ -20,6 +20,7 @@ MIXAL_init(MIXAL *mixal)
     }
 
     mixal->label = -1;
+    mixal->ra = -1;
 }
 
 static instruction *
@@ -66,6 +67,10 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 	switch (s->type) {
 	    case SMOV:{
 		instruction *inst;
+
+		inst = MIXAL_next(mixal);
+		inst->type = ISTA;
+		inst->address = mixal->ra;
 
 		inst = MIXAL_next(mixal);
 
@@ -233,15 +238,17 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 		break;
 	    }
 #define LOGICOP(OP, OP1) \
-		instruction *inst; \
-		if (mixal->ra != s->ty && mixal->ra != s->tz) { \
-		    store_ra_and_load(mixal, s->ty); \
-		    mixal->ra = s->ty; \
-		} \
- \
-		inst = MIXAL_next(mixal); \
+		instruction *inst = MIXAL_next(mixal); \
 		inst->type = ICMPA; \
-		inst->address = s->tz; \
+		if (mixal->ra == s->ty) { \
+		    store_ra_and_load(mixal, s->ty); \
+		    inst->address = s->tz; \
+		} else if (mixal->ra == s->tz) { \
+		    inst->address = s->ty; \
+		} else { \
+		    store_ra_and_load(mixal, s->ty); \
+		    inst->address = s->tz; \
+		} \
  \
 		inst = MIXAL_next(mixal); \
 		if (mixal->ra == s->ty) { \
@@ -365,14 +372,34 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 		break;
 	    }
 	    case SPRINT:{
+		instruction *instr;
+
 		if (mixal->ra != s->tx) {
 		    store_ra_and_load(mixal, s->tx);
-		    mixal->ra = s->tx;
+		} else {
+		    instr = MIXAL_next(mixal);
+		    instr->type = ISTA;
+		    instr->address = s->tx;
 		}
 
-		instruction *instr = MIXAL_next(mixal);
+		instr = MIXAL_next(mixal);
+		instr->type = ICHAR;
 
+		instr = MIXAL_next(mixal);
+		instr->type = ISTA;
+		instr->address = 1951;
+
+		instr = MIXAL_next(mixal);
+		instr->type = ISTX;
+		instr->address = 1952;
+
+		instr = MIXAL_next(mixal);
 		instr->type = IOUT;
+		instr->address = 1951;
+
+		instr = MIXAL_next(mixal);
+
+		mixal->ra = -1;
 		break;
 	    }
 	    case SJ:{
@@ -387,11 +414,26 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 		break;
 	    }
 	    case SJZ:{
+		if (mixal->ra != s->tx) {
+		    store_ra_and_load(mixal, s->tx);
+		    mixal->ra = s->tx;
+		}
 		instruction *inst = MIXAL_next(mixal);
 
 		inst->type = IJAZ;
 		inst->address = s->ty;
 		break;
+	    }
+	    case SASSIGN:{
+		if (mixal->ra != s->ty) {
+		    store_ra_and_load(mixal, s->ty);
+		    mixal->ra = s->ty;
+		}
+
+		instruction *inst = MIXAL_next(mixal);
+
+		inst->type = ISTA;
+		inst->address = s->tx;
 	    }
 	}
     }
