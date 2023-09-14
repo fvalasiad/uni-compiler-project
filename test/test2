@@ -2,7 +2,7 @@
 var i, product, x: int;
 x = 2;
 product = 1;
-for(i=0; i < 10; i=i+1) {
+for(i=0; i < 20; i=i+1) {
     product = x * product;
     print product;
 }

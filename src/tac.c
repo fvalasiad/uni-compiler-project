@@ -687,8 +687,7 @@ recurse(node *n, three_address_code *tac)
 
 		for (int i = 0; i < s->size; ++i) {
 		    s->t[2 * i] = tac->vars[i];
-		    tac->vars[i] = tac->tcount++;
-		    s->t[2 * i + 1] = tac->vars[i];
+		    s->t[2 * i + 1] = tac->tcount++;
 		}
 
 		statement *temp = s;

@@ -180,6 +180,7 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 
 		inst = MIXAL_next(mixal);
 		inst->type = ISTA;
+		inst->address = s->tx;
 		break;
 	    }
 	    case SPLUS:{
