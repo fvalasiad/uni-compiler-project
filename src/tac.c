@@ -173,9 +173,169 @@ recurse(node *n, three_address_code *tac)
 	    BINOP(LESS);
 	    BINOP(NOTEQ);
 	    BINOP(EQ);
-	    BINOP(AND);
-	    BINOP(OR);
 #undef BINOP
+	case EAND:{
+	    int label = tac->label++;
+
+	    statement *zero = tac_next(tac);
+
+	    zero->type = SMOV;
+	    zero->tx = tac->tcount++;
+	    zero->ty = 0;
+
+	    statement *one = tac_next(tac);
+
+	    one->type = SMOV;
+	    one->tx = tac->tcount++;
+	    one->ty = 1;
+
+	    int res = tac->tcount++;
+
+	    int arg = recurse(n->params, tac);
+
+	    statement *s = tac_next(tac);
+
+	    s->type = SJZ;
+	    s->tx = arg;
+	    s->ty = label;
+
+	    s->size = 1;
+	    s->t = malloc(2 * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->t[0] = zero->tx;
+	    s->t[1] = res;
+
+	    arg = recurse(n->params + 1, tac);
+
+	    s = tac_next(tac);
+	    s->type = SJZ;
+	    s->tx = arg;
+	    s->ty = label;
+
+	    s->size = 1;
+	    s->t = malloc(2 * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->t[0] = zero->tx;
+	    s->t[1] = res;
+	    s = tac_next(tac);
+
+	    s->type = SJ;
+	    s->tx = label;
+
+	    s->size = 1;
+	    s->t = malloc(2 * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->t[0] = one->tx;
+	    s->t[1] = res;
+
+	    s = tac_next(tac);
+	    s->type = SLABEL;
+	    s->tx = label;
+
+	    s->size = 1;
+	    s->t = malloc(sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->t[0] = res;
+
+	    return res;
+	}
+	case EOR:{
+	    int label = tac->label++;
+
+	    statement *zero = tac_next(tac);
+
+	    zero->type = SMOV;
+	    zero->tx = tac->tcount++;
+	    zero->ty = 0;
+
+	    statement *one = tac_next(tac);
+
+	    one->type = SMOV;
+	    one->tx = tac->tcount++;
+	    one->ty = 1;
+
+	    int res = tac->tcount++;
+
+	    int arg = recurse(n->params, tac);
+
+	    statement *s = tac_next(tac);
+
+	    s->type = SJNZ;
+	    s->tx = arg;
+	    s->ty = label;
+
+	    s->size = 1;
+	    s->t = malloc(2 * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->t[0] = one->tx;
+	    s->t[1] = res;
+
+	    arg = recurse(n->params + 1, tac);
+
+	    s = tac_next(tac);
+	    s->type = SJNZ;
+	    s->tx = arg;
+	    s->ty = label;
+
+	    s->size = 1;
+	    s->t = malloc(2 * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->t[0] = one->tx;
+	    s->t[1] = res;
+	    s = tac_next(tac);
+
+	    s->type = SJ;
+	    s->tx = label;
+
+	    s->size = 1;
+	    s->t = malloc(2 * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->t[0] = zero->tx;
+	    s->t[1] = res;
+
+	    s = tac_next(tac);
+	    s->type = SLABEL;
+	    s->tx = label;
+
+	    s->size = 1;
+	    s->t = malloc(sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->t[0] = res;
+
+	    return res;
+	}
 	case EASSIGN:{
 	    int arg = recurse(n->params + 1, tac);
 	    statement *s = tac_next(tac);
@@ -638,6 +798,7 @@ tac_deSSA(three_address_code *tac)
 	statement *s = tac->statements + i;
 
 	switch (s->type) {
+	    case SJNZ:
 	    case SJZ:
 	    case SJ:{
 		if (s->size == 0) {
@@ -697,8 +858,6 @@ tac_print(three_address_code *tac, FILE *out)
 		THREE(LESS, tac->statements[i]);
 		THREE(NOTEQ, tac->statements[i]);
 		THREE(EQ, tac->statements[i]);
-		THREE(AND, tac->statements[i]);
-		THREE(OR, tac->statements[i]);
 		ONE(PRINT, tac->statements[i]);
 	    case SJ:
 		s = tac->statements + i;
@@ -727,6 +886,18 @@ tac_print(three_address_code *tac, FILE *out)
 	    case SJZ:
 		s = tac->statements + i;
 		fprintf(out, "JZ t%d, l%d(", s->tx, s->ty);
+		for (int j = 0; j < s->size - 1; ++j) {
+		    fprintf(out, "t%d, ", s->t[2 * j]);
+		}
+		if (s->size) {
+		    fprintf(out, "t%d)\n", s->t[2 * (s->size - 1)]);
+		} else {
+		    fprintf(out, ")\n");
+		}
+		break;
+	    case SJNZ:
+		s = tac->statements + i;
+		fprintf(out, "JNZ t%d, l%d(", s->tx, s->ty);
 		for (int j = 0; j < s->size - 1; ++j) {
 		    fprintf(out, "t%d, ", s->t[2 * j]);
 		}

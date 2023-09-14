@@ -254,83 +254,6 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 		break;
 	    }
 #undef LOGICOP
-	    case SAND:{
-		instruction *instr;
-
-		instr = MIXAL_next(mixal);
-		instr->type = ILDA;
-		instr->address = s->ty;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IJAZ;
-		instr->address = tac->label++;
-
-		instr = MIXAL_next(mixal);
-		instr->type = ILDA;
-		instr->address = s->tz;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IJAZ;
-		instr->address = tac->label - 1;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IENTA;
-		instr->address = 1;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IJSJ;
-		instr->address = tac->label++;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IENTA;
-		instr->address = 0;
-		instr->label = tac->label - 2;
-
-		instr = MIXAL_next(mixal);
-		instr->type = ISTA;
-		instr->address = s->tx;
-		instr->label = tac->label - 1;
-		break;
-	    }
-	    case SOR:{
-		instruction *instr;
-
-		instr = MIXAL_next(mixal);
-		instr->type = ILDA;
-		instr->address = s->ty;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IJANZ;
-		instr->address = tac->label++;
-
-		instr = MIXAL_next(mixal);
-		instr->type = ILDA;
-		instr->address = s->tz;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IJAZ;
-		instr->address = tac->label++;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IENTA;
-		instr->address = 1;
-		instr->label = tac->label - 2;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IJSJ;
-		instr->address = tac->label++;
-
-		instr = MIXAL_next(mixal);
-		instr->type = IENTA;
-		instr->address = 0;
-		instr->label = tac->label - 2;
-
-		instr = MIXAL_next(mixal);
-		instr->type = ISTA;
-		instr->address = s->tx;
-		instr->label = tac->label - 1;
-		break;
-	    }
 	    case SPRINT:{
 		instruction *instr;
 
@@ -375,6 +298,19 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 		inst = MIXAL_next(mixal);
 
 		inst->type = IJAZ;
+		inst->address = s->ty;
+		break;
+	    }
+	    case SJNZ:{
+		instruction *inst;
+
+		inst = MIXAL_next(mixal);
+		inst->type = ILDA;
+		inst->address = s->tx;
+
+		inst = MIXAL_next(mixal);
+
+		inst->type = IJANZ;
 		inst->address = s->ty;
 		break;
 	    }
