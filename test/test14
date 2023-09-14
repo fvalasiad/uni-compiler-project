@@ -1,0 +1,6 @@
+{
+   var i, zero: int;
+   
+   i = 10;
+   print i % zero;
+}
