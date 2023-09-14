@@ -80,6 +80,11 @@ typedef struct {
 typedef struct {
     int label_start;
     int label_end;
+
+    int label_step;		  /* for-loops need this */
+    int *step_params;
+
+    int *t;			  /* params */
 } loop;
 
 typedef struct {
@@ -164,10 +169,6 @@ typedef struct {
     int size;
     int capacity;
 
-    /* What temporary does the accumulator contain? */
-    int ra;
-
-    /* Next instruction should have that label! */
     int label;
 } MIXAL;
 

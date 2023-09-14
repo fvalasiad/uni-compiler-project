@@ -1,0 +1,9 @@
+{
+    var i, a: int;
+
+    if (i == 1) {
+	a = 1;
+    }
+
+    print a;
+}

@@ -41,7 +41,7 @@ tac_next(three_address_code *tac)
 }
 
 static loop *
-tac_loops_push(three_address_code *tac)
+tac_loops_push(three_address_code *tac, char is_for_loop)
 {
     if (tac->loops_size == tac->loops_capacity) {
 	tac->loops_capacity *= 2;
@@ -56,6 +56,31 @@ tac_loops_push(three_address_code *tac)
 
     l->label_start = tac->label++;
     l->label_end = tac->label++;
+
+    if (is_for_loop) {
+	l->label_step = tac->label++;
+	l->step_params = malloc(tac->vars_size * sizeof (int));
+	if (l->step_params == NULL) {
+	    fprintf(stderr, "error : %s\n", strerror(errno));
+	    exit(EXIT_FAILURE);
+	}
+
+	for (int i = 0; i < tac->vars_size; ++i) {
+	    l->step_params[i] = tac->tcount++;
+	}
+    } else {
+	l->label_step = -1;
+    }
+
+    l->t = malloc(tac->vars_size * sizeof (int));
+    if (l->t == NULL) {
+	fprintf(stderr, "error : %s\n", strerror(errno));
+	exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < tac->vars_size; ++i) {
+	l->t[i] = tac->tcount++;
+    }
 
     return l;
 }
@@ -176,14 +201,38 @@ recurse(node *n, three_address_code *tac)
 	    break;
 	}
 	case ECONTINUE:{
+	    const loop *l = tac_loops_top(tac);
+
 	    statement *s = tac_next(tac);
 
 	    s->type = SJ;
-	    s->tx = tac_loops_top(tac)->label_start;
+	    s->size = tac->vars_size;
+	    s->t = malloc(2 * s->size * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    if (l->label_step > 0) {
+		s->tx = l->label_step;
+
+		for (int i = 0; i < s->size; ++i) {
+		    s->t[2 * i] = tac->vars[i];
+		    s->t[2 * i + 1] = l->step_params[i];
+		}
+
+	    } else {
+		s->tx = l->label_start;
+
+		for (int i = 0; i < s->size; ++i) {
+		    s->t[2 * i] = tac->vars[i];
+		    s->t[2 * i + 1] = l->t[i];
+		}
+	    }
 	    break;
 	}
 	case EFOR:{
-	    loop *l = tac_loops_push(tac);
+	    loop *l = tac_loops_push(tac, 1 /* is_for_loop = true */ );
 
 	    /* Initialize counter */
 	    recurse(n->params, tac);
@@ -202,7 +251,7 @@ recurse(node *n, three_address_code *tac)
 
 	    for (int i = 0; i < s->size; ++i) {
 		s->t[2 * i] = tac->vars[i];
-		tac->vars[i] = tac->tcount++;
+		tac->vars[i] = l->t[i];
 		s->t[2 * i + 1] = tac->vars[i];
 	    }
 
@@ -213,17 +262,7 @@ recurse(node *n, three_address_code *tac)
 	    s->tx = l->label_start;
 
 	    s->size = tac->vars_size;
-	    s->t = malloc(s->size * sizeof (int));
-	    if (s->t == NULL) {
-		fprintf(stderr, "error : %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	    }
-
-	    for (int i = 0; i < s->size; ++i) {
-		s->t[i] = tac->vars[i];
-	    }
-
-	    statement *label_reserve = s;
+	    s->t = l->t;
 
 	    /* Expression, jump to end if zero */
 	    int arg = recurse(n->params + 1, tac);
@@ -236,10 +275,33 @@ recurse(node *n, three_address_code *tac)
 	    s->size = 0;
 
 	    /* Next, follows the block */
-	    recurse(n->params + 2, tac);
+	    recurse(n->params + 3, tac);
 
 	    /* Finally, add the step and jump to start */
-	    recurse(n->params + 3, tac);
+	    s = tac_next(tac);
+	    s->type = SJ;
+	    s->tx = l->label_step;
+	    s->size = tac->vars_size;
+	    s->t = malloc(2 * s->size * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    for (int i = 0; i < s->size; ++i) {
+		s->t[2 * i] = tac->vars[i];
+		tac->vars[i] = l->step_params[i];
+		s->t[2 * i + 1] = tac->vars[i];
+	    }
+
+	    s = tac_next(tac);	       /* Mark the step to handle continue
+				          statements. */
+	    s->type = SLABEL;
+	    s->tx = l->label_step;
+	    s->size = tac->vars_size;
+	    s->t = l->step_params;
+
+	    recurse(n->params + 2, tac);
 
 	    s = tac_next(tac);
 	    s->type = SJ;
@@ -254,7 +316,7 @@ recurse(node *n, three_address_code *tac)
 
 	    for (int i = 0; i < s->size; ++i) {
 		s->t[2 * i] = tac->vars[i];
-		s->t[2 * i + 1] = label_reserve->t[i];
+		s->t[2 * i + 1] = l->t[i];
 	    }
 
 	    /* Mark the end of the loop */
@@ -264,15 +326,15 @@ recurse(node *n, three_address_code *tac)
 
 	    s->size = 0;
 
-	    for (int i = 0; i < label_reserve->size; ++i) {
-		tac->vars[i] = label_reserve->t[i];
+	    for (int i = 0; i < tac->vars_size; ++i) {
+		tac->vars[i] = l->t[i];
 	    }
 
 	    tac_loops_pop(tac);
 	    break;
 	}
 	case EWHILE:{
-	    loop *l = tac_loops_push(tac);
+	    loop *l = tac_loops_push(tac, 0);
 
 	    statement *s = tac_next(tac);
 
@@ -288,7 +350,7 @@ recurse(node *n, three_address_code *tac)
 
 	    for (int i = 0; i < s->size; ++i) {
 		s->t[2 * i] = tac->vars[i];
-		tac->vars[i] = tac->tcount++;
+		tac->vars[i] = l->t[i];
 		s->t[2 * i + 1] = tac->vars[i];
 	    }
 
@@ -299,17 +361,7 @@ recurse(node *n, three_address_code *tac)
 	    s->tx = l->label_start;
 
 	    s->size = tac->vars_size;
-	    s->t = malloc(s->size * sizeof (int));
-	    if (s->t == NULL) {
-		fprintf(stderr, "error : %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	    }
-
-	    for (int i = 0; i < s->size; ++i) {
-		s->t[i] = tac->vars[i];
-	    }
-
-	    statement *label_reserve = s;
+	    s->t = l->t;
 
 	    /* Expression, jump to end if zero */
 	    int arg = recurse(n->params, tac);
@@ -340,7 +392,7 @@ recurse(node *n, three_address_code *tac)
 
 	    for (int i = 0; i < s->size; ++i) {
 		s->t[2 * i] = tac->vars[i];
-		s->t[2 * i + 1] = label_reserve->t[i];
+		s->t[2 * i + 1] = l->t[i];
 	    }
 
 	    /* Mark the end */
@@ -351,8 +403,8 @@ recurse(node *n, three_address_code *tac)
 
 	    s->size = 0;
 
-	    for (int i = 0; i < label_reserve->size; ++i) {
-		tac->vars[i] = label_reserve->t[i];
+	    for (int i = 0; i < tac->vars_size; ++i) {
+		tac->vars[i] = l->t[i];
 	    }
 
 	    tac_loops_pop(tac);
