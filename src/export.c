@@ -7,10 +7,6 @@ MIXAL_export(MIXAL *mixal, FILE *out)
     for (int i = 0; i < mixal->size; ++i) {
 	instruction *inst = mixal->instructions + i;
 
-	if (inst->address < 0) {
-	    continue;
-	}
-
 	if (inst->label >= 0) {
 	    fprintf(out, "l%d ", inst->label);
 	} else {
