@@ -1,0 +1,30 @@
+{
+   var a, b, c, d, result: int;
+   a = 10;
+   b = 20;
+   c = 5;
+   d = 0;
+   result = 0;
+
+   if (a > b) {
+       result = a - b;
+   } else {
+       result = b - a;
+   }
+
+   while (c > d) {
+       result += c;
+       d += 1;
+
+       if (d == 2) {
+           break;
+       }
+
+       if (d == 1) {
+           continue;
+       }
+   }
+
+   print result;
+}
+
