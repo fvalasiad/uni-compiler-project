@@ -52,7 +52,11 @@ MIXAL_export(MIXAL *mixal, FILE *out)
 		break;
 	    }
 	    case IJAZ:{
-		fprintf(out, "JAZ l%d\n", inst->address);
+		if (inst->address > 0) {
+		    fprintf(out, "JAZ l%d\n", inst->address);
+		} else {
+		    fprintf(out, "JAZ ldbze\n");
+		}
 		break;
 	    }
 	    case IJSJ:{
@@ -124,5 +128,9 @@ MIXAL_export(MIXAL *mixal, FILE *out)
     } else {
 	fprintf(out, "    ");
     }
-    fprintf(out, "HLT\n   END 2000\n");
+    fprintf(out, "HLT\n");
+    fprintf(out, "ldbze OUT ERR(19)\n HLT\n");
+    fprintf(out,
+	    "ERR ALF \"DIVIS\"\n ALF \"ION B\"\n ALF \"Y ZER\"\n ALF \"O    \"\n");
+    fprintf(out, " END 2000\n");
 }
