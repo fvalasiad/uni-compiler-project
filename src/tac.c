@@ -264,6 +264,10 @@ recurse(node *n, three_address_code *tac)
 
 	    s->size = 0;
 
+	    for (int i = 0; i < label_reserve->size; ++i) {
+		tac->vars[i] = label_reserve->t[i];
+	    }
+
 	    tac_loops_pop(tac);
 	    break;
 	}
@@ -346,6 +350,10 @@ recurse(node *n, three_address_code *tac)
 	    s->tx = l->label_end;
 
 	    s->size = 0;
+
+	    for (int i = 0; i < label_reserve->size; ++i) {
+		tac->vars[i] = label_reserve->t[i];
+	    }
 
 	    tac_loops_pop(tac);
 	    break;
