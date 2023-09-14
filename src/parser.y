@@ -328,6 +328,15 @@ context_find(const context *ctx, const char *id, char id_size)
 void
 context_insert(context *ctx, const char *id, char id_size)
 {
+    int found = context_find(ctx, id, id_size);
+    if (found != -1) {
+	fprintf(stderr, "error: redeclaration of variable ");
+	for (int i = 0; i < id_size; ++i) {
+	    putc(id[i], stderr);
+	}
+	putc('\n', stderr);
+    }
+
     if (ctx->capacity < ctx->size + id_size) {
 	while (ctx->capacity < ctx->size + id_size) {
 	    ctx->capacity *= 2;
