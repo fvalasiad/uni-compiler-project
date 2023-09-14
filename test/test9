@@ -1,0 +1,11 @@
+{
+    var i: int;
+
+    for (i = 1; i <= 100; i = i + 1) {
+	if (i % 54 == 0) {
+	    break;
+	}
+
+	print i;
+    }
+}

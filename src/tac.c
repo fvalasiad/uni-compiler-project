@@ -22,6 +22,14 @@ tac_new(three_address_code *tac)
 
     tac->label = 0;
     tac->tcount = 21;		       /* 0-20 reserved by MIX */
+
+    tac->loops_capacity = TAC_DEFAULT_CAPACITY;
+    tac->loops_size = 0;
+    tac->loops = malloc(tac->loops_capacity * sizeof (loop));
+    if (!tac->loops) {
+	fprintf(stderr, "error : %s\n", strerror(errno));
+	exit(EXIT_FAILURE);
+    }
 }
 
 static statement *
@@ -194,10 +202,25 @@ recurse(node *n, three_address_code *tac)
 	    break;
 	}
 	case EBREAK:{
+	    const loop *l = tac_loops_top(tac);
+
 	    statement *s = tac_next(tac);
 
 	    s->type = SJ;
-	    s->tx = tac_loops_top(tac)->label_end;
+	    s->size = tac->vars_size;
+	    s->t = malloc(2 * s->size * sizeof (int));
+	    if (s->t == NULL) {
+		fprintf(stderr, "error : %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	    }
+
+	    s->tx = l->label_end;
+
+	    for (int i = 0; i < s->size; ++i) {
+		s->t[2 * i] = tac->vars[i];
+		s->t[2 * i + 1] = l->t[i];
+	    }
+
 	    break;
 	}
 	case ECONTINUE:{
