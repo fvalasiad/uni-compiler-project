@@ -115,6 +115,10 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 		instruction *inst;
 
 		inst = MIXAL_next(mixal);
+		inst->type = IENTA;
+		inst->address = 0;
+
+		inst = MIXAL_next(mixal);
 		inst->type = ILDX;
 		inst->address = s->ty;
 
@@ -129,6 +133,10 @@ tac_to_MIXAL(three_address_code *tac, MIXAL *mixal)
 	    }
 	    case SDIV:{
 		instruction *inst;
+
+		inst = MIXAL_next(mixal);
+		inst->type = IENTA;
+		inst->address = 0;
 
 		inst = MIXAL_next(mixal);
 		inst->type = ILDX;
