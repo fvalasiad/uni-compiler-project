@@ -359,59 +359,148 @@ recurse(node *n, three_address_code *tac)
 	    break;
 	}
 	case EIF:{
-	    int end_label = tac->label++;
-	    int arg = recurse(n->params, tac);
+	    if (n->size == 2) {	       /* if case */
+		int end_label = tac->label++;
+		int arg = recurse(n->params, tac);	/* cond */
 
-	    /* If zero jump to else block or fi */
-	    statement *s = tac_next(tac);
+		/* If zero jump to end */
+		statement *s = tac_next(tac);
 
-	    s->type = SJZ;
-	    s->tx = arg;
-	    s->ty = end_label;
+		s->type = SJZ;
+		s->tx = arg;
+		s->ty = end_label;
 
-	    s->size = 0;
+		s->size = tac->vars_size;
+		s->t = malloc(2 * s->size * sizeof (int));
+		if (s->t == NULL) {
+		    fprintf(stderr, "error : %s\n", strerror(errno));
+		    exit(EXIT_FAILURE);
+		}
 
-	    /* the "if" block */
-	    recurse(n->params + 1, tac);
+		for (int i = 0; i < s->size; ++i) {
+		    s->t[2 * i] = tac->vars[i];
+		    tac->vars[i] = tac->tcount++;
+		    s->t[2 * i + 1] = tac->vars[i];
+		}
 
-	    if (n->size == 3) {	       /* Do we have an "else" block? */
-		/* If so, jump to the very end! */
-		int very_end_label = tac->label++;
+		statement *temp = s;
+
+		recurse(n->params + 1, tac);
 
 		s = tac_next(tac);
 
 		s->type = SJ;
-		s->tx = very_end_label;
+		s->tx = end_label;
 
-		s->size;
+		s->size = tac->vars_size;
+		s->t = malloc(2 * s->size * sizeof (int));
+		if (s->t == NULL) {
+		    fprintf(stderr, "error : %s\n", strerror(errno));
+		    exit(EXIT_FAILURE);
+		}
 
-		/* Here resides the end_label */
+		for (int i = 0; i < s->size; ++i) {
+		    s->t[2 * i] = tac->vars[i];
+		    s->t[2 * i + 1] = temp->t[2 * i + 1];
+		}
+
 		s = tac_next(tac);
 
 		s->type = SLABEL;
 		s->tx = end_label;
+
+		s->size = tac->vars_size;
+		s->t = malloc(s->size * sizeof (int));
+		if (s->t == NULL) {
+		    fprintf(stderr, "error : %s\n", strerror(errno));
+		    exit(EXIT_FAILURE);
+		}
+
+		for (int i = 0; i < s->size; ++i) {
+		    s->t[i] = temp->t[2 * i + 1];
+		    tac->vars[i] = s->t[i];
+		}
+	    } else {		       /* if-else case */
+		int else_label = tac->label++;
+		int arg = recurse(n->params, tac);	/* cond */
+
+		/* If zero jump to else */
+		statement *s = tac_next(tac);
+
+		s->type = SJZ;
+		s->tx = arg;
+		s->ty = else_label;
+
+		s->size = 0;
+
+		/* the "if" block */
+		recurse(n->params + 1, tac);
+
+		int end_label = tac->label++;
+
+		s = tac_next(tac);
+
+		s->type = SJ;
+		s->tx = end_label;
+
+		s->size = tac->vars_size;
+		s->t = malloc(2 * s->size * sizeof (int));
+		if (s->t == NULL) {
+		    fprintf(stderr, "error : %s\n", strerror(errno));
+		    exit(EXIT_FAILURE);
+		}
+
+		for (int i = 0; i < s->size; ++i) {
+		    s->t[2 * i] = tac->vars[i];
+		    tac->vars[i] = tac->tcount++;
+		    s->t[2 * i + 1] = tac->vars[i];
+		}
+
+		statement *temp = s;
+
+		s = tac_next(tac);
+
+		s->type = SLABEL;
+		s->tx = else_label;
 
 		s->size = 0;
 
 		/* The "else" block */
 		recurse(n->params + 2, tac);
 
-		/* Here resides the very end label */
 		s = tac_next(tac);
 
-		s->type = SLABEL;
-		s->tx = very_end_label;
+		s->type = SJ;
+		s->tx = end_label;
 
-		s->size = 0;
-	    } else {		       /* Or maybe not? */
-		/* Then here resides the end label */
+		s->size = tac->vars_size;
+		s->t = malloc(2 * s->size * sizeof (int));
+		if (s->t == NULL) {
+		    fprintf(stderr, "error : %s\n", strerror(errno));
+		    exit(EXIT_FAILURE);
+		}
+
+		for (int i = 0; i < s->size; ++i) {
+		    s->t[2 * i] = tac->vars[i];
+		    s->t[2 * i + 1] = temp->t[2 * i + 1];
+		}
 
 		s = tac_next(tac);
 
 		s->type = SLABEL;
 		s->tx = end_label;
 
-		s->size = 0;
+		s->size = tac->vars_size;
+		s->t = malloc(s->size * sizeof (int));
+		if (s->t == NULL) {
+		    fprintf(stderr, "error : %s\n", strerror(errno));
+		    exit(EXIT_FAILURE);
+		}
+
+		for (int i = 0; i < s->size; ++i) {
+		    s->t[i] = temp->t[2 * i + 1];
+		    tac->vars[i] = s->t[i];
+		}
 	    }
 	    break;
 	}
