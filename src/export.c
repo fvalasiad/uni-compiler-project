@@ -8,9 +8,14 @@ MIXAL_export(MIXAL *mixal, FILE *out)
 	instruction *inst = mixal->instructions + i;
 
 	if (inst->label >= 0) {
-	    fprintf(out, "l%d ", inst->label);
+	    int count = fprintf(out, "l%d", inst->label);
+
+	    fprintf(out, " ");
+	    for (int i = 0; i < 3 - count; ++i) {
+		fprintf(out, " ");
+	    }
 	} else {
-	    fprintf(out, "   ");
+	    fprintf(out, "    ");
 	}
 
 	switch (inst->type) {
@@ -110,9 +115,14 @@ MIXAL_export(MIXAL *mixal, FILE *out)
     }
 
     if (mixal->label >= 0) {
-	fprintf(out, "l%d ", mixal->label);
+	int count = fprintf(out, "l%d", mixal->label);
+
+	fprintf(out, " ");
+	for (int i = 0; i < 3 - count; ++i) {
+	    fprintf(out, " ");
+	}
     } else {
-	fprintf(out, "   ");
+	fprintf(out, "    ");
     }
     fprintf(out, "HLT\n   END 2000\n");
 }
