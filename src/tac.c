@@ -667,6 +667,15 @@ recurse(node *n, three_address_code *tac)
 
 		s->size = 0;
 
+		int *hold = malloc(tac->vars_size * sizeof (int));
+
+		if (hold == NULL) {
+		    fprintf(stderr, "error : %s\n", strerror(errno));
+		    exit(EXIT_FAILURE);
+		}
+
+		memcpy(hold, tac->vars, tac->vars_size * sizeof (int));
+
 		/* the "if" block */
 		recurse(n->params + 1, tac);
 
@@ -697,6 +706,9 @@ recurse(node *n, three_address_code *tac)
 		s->tx = else_label;
 
 		s->size = 0;
+
+		memcpy(tac->vars, hold, tac->vars_size * sizeof (int));
+		free(hold);
 
 		/* The "else" block */
 		recurse(n->params + 2, tac);
