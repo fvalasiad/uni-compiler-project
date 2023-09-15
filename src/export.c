@@ -52,7 +52,7 @@ MIXAL_export(MIXAL *mixal, FILE *out)
 		break;
 	    }
 	    case IJAZ:{
-		if (inst->address > 0) {
+		if (inst->address >= 0) {
 		    fprintf(out, "JAZ l%d\n", inst->address);
 		} else {
 		    fprintf(out, "JAZ ldbze\n");
