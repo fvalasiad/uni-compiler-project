@@ -1,0 +1,62 @@
+{
+var a, b, c, d, e, f, g, h: int;
+a = 1;
+b = 2;
+c = 3;
+d = 4;
+e = 5;
+f = 6;
+g = 7;
+h = 8;
+
+if (a > b) {
+    if (c > d) {
+        e = a + c;
+        f = b + d;
+        if (e > f) {
+            g = e - f;
+            h = g * 2;
+        } else {
+            g = e * f;
+            h = g / 2;
+        }
+    } else {
+        e = a - c;
+        f = b - d;
+        if (e > f) {
+            g = e + f;
+            h = g / 2;
+        } else {
+            g = e * f;
+            h = g + 2;
+        }
+    }
+} else {
+    if (c > d) {
+        e = a * c;
+        f = b * d;
+        if (e > f) {
+            g = e + f;
+            h = g - 2;
+        } else {
+            g = e / f;
+            h = g * 2;
+        }
+    } else {
+        e = a / c;
+        f = b / d;
+        if (e > f) {
+            g = e - f;
+            h = g / 2;
+        } else {
+            g = e * f;
+            h = g + 2;
+        }
+    }
+}
+
+print e;
+print f;
+print g;
+print h;
+}

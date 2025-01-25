@@ -1,0 +1,28 @@
+{
+   var i, j, k, n: int;
+
+   n = 10;
+
+   for (i = 1; i <= n; i = i + 1) {
+      print i;
+
+      j = 1;
+      while (j < i) {
+         if (j % 2 == 0) {
+            j = j + 1;
+            continue;
+         } else {
+            if (j == 5) {
+               break;
+            }
+            print j;
+            j = j + 1;
+         }
+      }
+
+      if (i == 7) {
+         break;
+      }
+   }
+}
+
