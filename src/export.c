@@ -1,3 +1,8 @@
+
+/*
+Copyright (C) 2023 Fotios Valasiadis
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
 #include "types.h"
 
 void

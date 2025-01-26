@@ -1,3 +1,6 @@
+dnl Copyright (C) 2023 Fotios Valasiadis
+dnl SPDX-License-Identifier: GPL-3.0-or-later
+
 AC_INIT([mix-compiler], [0.1]) 
 
 dnl Directories for auxiliary files and macros
